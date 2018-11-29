@@ -1,0 +1,156 @@
+
+---
+title: "Analysis of CMC II"
+
+author: "Gabriel Hoffman"
+date: "Run on `r Sys.Date()`"
+documentclass: article
+output: 
+  html_document:
+  toc: true
+  smart: false
+vignette: >
+  %\VignetteIndexEntry{CMC II}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  %\usepackage[utf8]{inputenc}
+---
+
+<!--- 
+# run analysis
+cd /Users/gabrielhoffman/workspace/cmc_analysis/src
+rmarkdown::render("qc_check.Rmd", output_dir='./', intermediates_dir='./')
+--->
+
+
+
+```{r load.packages, echo=FALSE, message=FALSE, results='hide'}
+library(data.table)
+library(ggplot2)
+library(gridExtra)
+library(pcaMethods)
+library(foreach)
+library(synapser)
+
+synLogin()
+
+options(xtable.type="html")
+
+knitr::opts_chunk$set(
+  echo=FALSE,
+  warning=FALSE,
+  message=TRUE,
+  error = FALSE,
+  tidy = FALSE,
+  cache = TRUE,
+  cache.lazy = FALSE,
+  dev = c("png", "pdf"), 
+  fig.width=7, fig.height=7)
+
+options(markdown.HTML.stylesheet = 'css/custom.css')
+```
+
+
+```{r plot.sex.genes}
+# define file locations
+# FPKM
+synID_array = c('HBCC' = 'syn16783078', 
+				'CMC_PFC' = 'syn16783518', 
+				'CMC_ACC' = 'syn16783569')
+
+# TPM give same qualitative results
+# synID_array = c('HBCC' = 'syn16783088', 
+# 				'CMC_PFC' = 'syn16783522', 
+# 				'CMC_ACC' = 'syn16783578')
+
+# get sex genes
+XIST_ens = 'ENSG00000229807'
+UTY_ens = 'ENSG00000183878'
+```
+
+```{r getdata}
+
+# plot for each dataset
+geneExpress = foreach( id = names(synID_array) ) %do% {
+
+	synID = synID_array[id]
+
+	# read data
+	df_tpm = fread( synGet(as.character(synID))$path)
+	# df_tpm$ensID = sapply(strsplit(df_tpm$gene_id, '\\.'), function(x) x[1])
+	df_tpm = df_tpm[,-2]
+}
+names(geneExpress) = names(synID_array) 
+
+# merge 3 datasets
+dataMerge = merge(geneExpress[[1]], geneExpress[[2]], by='gene_id')
+dataMerge = merge(dataMerge, geneExpress[[3]], by='gene_id')
+
+dataMerge = data.frame(dataMerge)
+rownames(dataMerge) = dataMerge$gene_id
+dataMerge$gene_id = c()
+
+# get log2 FPKM
+dataMerge = log2(dataMerge+0.1)
+```
+
+# Plot sex genes
+```{r plot.sex_genes}
+
+XIST_ens = 'ENSG00000229807'
+UTY_ens = 'ENSG00000183878'
+
+i = grep(XIST_ens, rownames(dataMerge))
+j = grep(UTY_ens, rownames(dataMerge))
+
+df_sex_genes = data.frame(XIST = t(dataMerge[i,]),
+					UTY = t(dataMerge[j,]))
+colnames(df_sex_genes) = c('XIST', 'UTY')
+
+# get dataset
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[1]])] = names(geneExpress)[1]
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
+
+# make plot
+ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
+```
+
+
+# PCA 
+```{r plot.pca}
+idx = rowSums(dataMerge>1) >= 500
+# table(idx)
+
+dcmp = pca( dataMerge[idx,], nPcs=2)
+
+df_pc = data.frame(dcmp@loadings)
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[1]])] = names(geneExpress)[1]
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
+
+ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1)
+```
+
+
+
+
+
+
+
+
+https://github.com/GabrielHoffman/cmc_analysis.git
+
+
+
+
+
+
+
+
+
+
+
+
+
+
