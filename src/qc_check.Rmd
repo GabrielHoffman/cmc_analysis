@@ -19,6 +19,7 @@ vignette: >
 <!--- 
 # run analysis
 cd /Users/gabrielhoffman/workspace/cmc_analysis/src
+# cd ~/work/cmc/cmc_analysis/
 rmarkdown::render("qc_check.Rmd", output_dir='./', intermediates_dir='./')
 --->
 
@@ -68,7 +69,7 @@ XIST_ens = 'ENSG00000229807'
 UTY_ens = 'ENSG00000183878'
 ```
 
-```{r getdata}
+```{r getdata, echo=FALSE}
 
 # plot for each dataset
 geneExpress = foreach( id = names(synID_array) ) %do% {
