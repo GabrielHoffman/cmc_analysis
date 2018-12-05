@@ -51,8 +51,8 @@ knitr::opts_chunk$set(
 options(markdown.HTML.stylesheet = 'css/custom.css')
 ```
 
-
-```{r plot.sex.genes}
+# RSEM FPKM
+```{r define.data}
 # define file locations
 # FPKM
 synID_array = c('HBCC' = 'syn16783078', 
@@ -95,8 +95,8 @@ dataMerge$gene_id = c()
 dataMerge = log2(dataMerge+0.1)
 ```
 
-# Plot sex genes
-```{r plot.sex_genes}
+## Plot sex genes
+```{r plot.sex_genes, fig.height=3}
 
 XIST_ens = 'ENSG00000229807'
 UTY_ens = 'ENSG00000183878'
@@ -117,11 +117,9 @@ df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = n
 ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
 ```
 
-
-# PCA 
+## PCA 
 ```{r plot.pca}
 idx = rowSums(dataMerge>1) >= 500
-# table(idx)
 
 dcmp = pca( dataMerge[idx,], nPcs=2)
 
@@ -130,9 +128,299 @@ df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[1]])] = names(geneExpre
 df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
 df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
 
-ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1)
+ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(aes())
 ```
 
+Genes in PCA: `r sum(idx)`
+
+
+# kallisto
+```{r define.data.kallisto}
+# define file locations
+# FPKM
+synID_array = c('HBCC' = 'syn16783071', 
+        'CMC_PFC' = 'syn16783516', 
+        'CMC_ACC' = 'syn16783558')
+
+# TPM give same qualitative results
+# synID_array = c('HBCC' = 'syn16783088', 
+#         'CMC_PFC' = 'syn16783522', 
+#         'CMC_ACC' = 'syn16783578')
+
+# get sex genes
+XIST_ens = 'ENSG00000229807'
+UTY_ens = 'ENSG00000183878'
+```
+
+```{r getdata.kallisto, echo=FALSE}
+
+# plot for each dataset
+geneExpress = foreach( id = names(synID_array) ) %do% {
+
+  synID = synID_array[id]
+
+  # read data
+  df_tpm = fread( synGet(as.character(synID))$path)
+
+  df_tpm = df_tpm
+  gene_id = sapply(strsplit( df_tpm$target_id, '\\|'), function(x) x[2])
+  gene_id = sapply(strsplit( gene_id, '\\.'), function(x) x[1])
+  df_tpm$target_id = c()
+  df_tpm$gene_id = gene_id
+
+  # sum TPM for the multiple transcripts from the same gene
+  df_tpm[,lapply(.SD, sum),by='gene_id']
+}
+names(geneExpress) = names(synID_array) 
+
+# merge 3 datasets
+dataMerge = merge(geneExpress[[1]], geneExpress[[2]], by='gene_id')
+dataMerge = merge(dataMerge, geneExpress[[3]], by='gene_id')
+
+dataMerge = data.frame(dataMerge)
+rownames(dataMerge) = dataMerge$gene_id
+dataMerge$gene_id = c()
+
+# get log2 FPKM
+dataMerge = log2(dataMerge+0.1)
+```
+
+## Plot sex genes
+```{r plot.sex_genes.kallisto, fig.height=3}
+
+XIST_ens = 'ENSG00000229807'
+UTY_ens = 'ENSG00000183878'
+
+i = grep(XIST_ens, rownames(dataMerge))
+j = grep(UTY_ens, rownames(dataMerge))
+
+df_sex_genes = data.frame(XIST = t(dataMerge[i,]),
+          UTY = t(dataMerge[j,]))
+colnames(df_sex_genes) = c('XIST', 'UTY')
+
+# get dataset
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[1]])] = names(geneExpress)[1]
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
+
+# make plot
+ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
+```
+
+## PCA 
+```{r plot.pca.kallisto}
+idx = rowSums(dataMerge>1) >= 500
+
+dcmp = pca( dataMerge[idx,], nPcs=2)
+
+df_pc = data.frame(dcmp@loadings)
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[1]])] = names(geneExpress)[1]
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
+
+ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(aes())
+```
+
+Genes in PCA: `r sum(idx)`
+
+
+# featureCounts
+```{r define.data.featureCounts}
+# define file locations
+# FPKM
+synID_array = c('HBCC' = 'syn16783066', 
+        'CMC_PFC' = 'syn16783508', 
+        'CMC_ACC' = 'syn16783557')
+
+# TPM give same qualitative results
+# synID_array = c('HBCC' = 'syn16783088', 
+#         'CMC_PFC' = 'syn16783522', 
+#         'CMC_ACC' = 'syn16783578')
+
+# get sex genes
+XIST_ens = 'ENSG00000229807'
+UTY_ens = 'ENSG00000183878'
+```
+
+```{r getdata.featureCounts, echo=FALSE}
+
+# plot for each dataset
+geneExpress = foreach( id = names(synID_array) ) %do% {
+
+  synID = synID_array[id]
+
+  # read data
+  df_Counts = fread( synGet(as.character(synID))$path)
+  df_Counts = df_Counts[,-c(2:6)]
+  df_Counts$Geneid = sapply(strsplit( df_Counts$Geneid, '\\.'), function(x) x[1])
+  df_Counts
+}
+names(geneExpress) = names(synID_array) 
+
+# merge 3 datasets
+dataMergeCounts = merge(geneExpress[[1]], geneExpress[[2]], by='Geneid')
+dataMergeCounts = merge(dataMergeCounts, geneExpress[[3]], by='Geneid')
+
+dataMergeCounts = data.frame(dataMergeCounts)
+dataMergeCounts = dataMergeCounts[!duplicated(dataMergeCounts$Geneid),]
+rownames(dataMergeCounts) = dataMergeCounts$Geneid
+dataMergeCounts$Geneid = c()
+```
+
+```{r normalize.counts}
+library(edgeR)
+
+idx = rowSums(dataMergeCounts>10) >= 500
+table(idx)
+
+dge = DGEList( counts = dataMergeCounts[idx,])
+dge = calcNormFactors( dge )
+
+geneExpr = cpm( dge, log=TRUE)
+```
+
+## Plot sex genes
+```{r plot.sex_genes.featureCounts, fig.height=3}
+
+XIST_ens = 'ENSG00000229807'
+UTY_ens = 'ENSG00000183878'
+
+i = grep(XIST_ens, rownames(geneExpr))
+j = grep(UTY_ens, rownames(geneExpr))
+
+df_sex_genes = data.frame(XIST = geneExpr[i,],
+          UTY = geneExpr[j,])
+colnames(df_sex_genes) = c('XIST', 'UTY')
+
+# get dataset
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[1]])] = names(geneExpress)[1]
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
+
+# make plot
+ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
+```
+
+## PCA 
+```{r plot.pca.featureCounts}
+idx = rowSums(geneExpr>1) >= 500
+ 
+dcmp = pca( geneExpr[idx,], nPcs=2)
+
+df_pc = data.frame(dcmp@loadings)
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[1]])] = names(geneExpress)[1]
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
+
+ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(aes())
+```
+
+Genes in PCA: `r sum(idx)`
+
+
+
+# featureCounts, hg37
+```{r define.data.featureCounts37}
+# define file locations
+# FPKM
+synID_array = c('HBCC' = 'syn8465067', 
+        'CMC_PFC' = 'syn8413221', 
+        'CMC_ACC' = 'syn8414424')
+
+# TPM give same qualitative results
+# synID_array = c('HBCC' = 'syn16783088', 
+#         'CMC_PFC' = 'syn16783522', 
+#         'CMC_ACC' = 'syn16783578')
+
+# get sex genes
+XIST_ens = 'ENSG00000229807'
+UTY_ens = 'ENSG00000183878'
+```
+
+```{r getdata.featureCounts37, echo=FALSE}
+
+# plot for each dataset
+geneExpress = foreach( id = names(synID_array) ) %do% {
+
+  synID = synID_array[id]
+
+  # read data
+  df_Counts = fread( synGet(as.character(synID))$path )
+  df_Counts = df_Counts[,-c(2:6)]
+  colnames(df_Counts)[1] = "Geneid"
+  rownames(df_Counts) = df_Counts$Geneid
+
+  if( length( grep("bam$", df_Counts[nrow(df_Counts),10])) >0 ){
+    df_Counts = df_Counts[-nrow(df_Counts),]  
+
+    # convert counts to numeric
+    df2 = data.frame(data.matrix( df_Counts[,-1] ))
+    df2$Geneid = df_Counts$Geneid
+    df_Counts = data.table(df2)
+  }
+  df_Counts
+}
+names(geneExpress) = names(synID_array) 
+
+# merge 3 datasets
+dataMergeCounts = merge(geneExpress[[1]], geneExpress[[2]], by='Geneid')
+dataMergeCounts = merge(dataMergeCounts, geneExpress[[3]], by='Geneid')
+
+dataMergeCounts = data.frame(dataMergeCounts)
+dataMergeCounts = dataMergeCounts[!duplicated(dataMergeCounts$Geneid),]
+rownames(dataMergeCounts) = dataMergeCounts$Geneid
+dataMergeCounts$Geneid = c()
+```
+
+```{r normalize.counts.featureCounts37}
+library(edgeR)
+
+idx = rowSums(dataMergeCounts>10) >= 500
+table(idx)
+
+dge = DGEList( counts = dataMergeCounts[idx,])
+dge = calcNormFactors( dge )
+
+geneExpr = cpm( dge, log=TRUE)
+```
+
+## Plot sex genes
+```{r plot.sex_genes.featureCounts37, fig.height=3}
+
+XIST_ens = 'ENSG00000229807'
+UTY_ens = 'ENSG00000183878'
+
+i = grep(XIST_ens, rownames(geneExpr))
+j = grep(UTY_ens, rownames(geneExpr))
+
+df_sex_genes = data.frame(XIST = geneExpr[i,],
+          UTY = geneExpr[j,])
+colnames(df_sex_genes) = c('XIST', 'UTY')
+
+# get dataset
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[1]])] = names(geneExpress)[1]
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
+
+# make plot
+ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
+```
+
+## PCA 
+```{r plot.pca.featureCounts37}
+idx = rowSums(geneExpr>1) >= 500
+ 
+dcmp = pca( geneExpr[idx,], nPcs=2)
+
+df_pc = data.frame(dcmp@loadings)
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[1]])] = names(geneExpress)[1]
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
+
+ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(aes())
+```
+
+Genes in PCA: `r sum(idx)`
 
 
 
@@ -140,7 +428,7 @@ ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + them
 
 
 
-https://github.com/GabrielHoffman/cmc_analysis.git
+
 
 
 
