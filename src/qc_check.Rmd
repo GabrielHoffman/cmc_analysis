@@ -51,7 +51,6 @@ knitr::opts_chunk$set(
 options(markdown.HTML.stylesheet = 'css/custom.css')
 ```
 
-# RSEM FPKM
 ```{r define.data}
 # define file locations
 # FPKM
@@ -95,7 +94,7 @@ dataMerge$gene_id = c()
 dataMerge = log2(dataMerge+0.1)
 ```
 
-### Plot sex genes
+
 ```{r plot.sex_genes, fig.height=3}
 
 XIST_ens = 'ENSG00000229807'
@@ -117,7 +116,6 @@ df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = n
 fig1 = ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
 ```
 
-### PCA 
 ```{r plot.pca, fig.height=5}
 idx = rowSums(dataMerge>1) >= 500
 
@@ -139,7 +137,6 @@ Genes in PCA: `r sum(idx)`
 grid.arrange(fig1, fig2, ncol=2, top='RSEM hg38')
 ```
 
-# kallisto
 ```{r define.data.kallisto}
 # define file locations
 # FPKM
@@ -190,7 +187,6 @@ dataMerge$gene_id = c()
 dataMerge = log2(dataMerge+0.1)
 ```
 
-### Plot sex genes
 ```{r plot.sex_genes.kallisto, fig.height=3}
 
 XIST_ens = 'ENSG00000229807'
@@ -212,7 +208,6 @@ df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = n
 fig1 = ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
 ```
 
-### PCA 
 ```{r plot.pca.kallisto, fig.height=5}
 idx = rowSums(dataMerge>1) >= 500
 
@@ -289,7 +284,6 @@ dge = calcNormFactors( dge )
 geneExpr = cpm( dge, log=TRUE)
 ```
 
-### Plot sex genes
 ```{r plot.sex_genes.featureCounts, fig.height=3}
 
 XIST_ens = 'ENSG00000229807'
@@ -311,7 +305,6 @@ df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = n
 fig1 = ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
 ```
 
-### PCA 
 ```{r plot.pca.featureCounts, fig.height=5}
 idx = rowSums(geneExpr>1) >= 500
  
@@ -334,7 +327,6 @@ grid.arrange(fig1, fig2, ncol=2, top='featureCounts hg38')
 ```
 
 
-# featureCounts, hg37
 ```{r define.data.featureCounts37}
 # define file locations
 # FPKM
@@ -399,7 +391,6 @@ dge = calcNormFactors( dge )
 geneExpr = cpm( dge, log=TRUE)
 ```
 
-### Plot sex genes
 ```{r plot.sex_genes.featureCounts37, fig.height=3}
 
 XIST_ens = 'ENSG00000229807'
@@ -421,7 +412,6 @@ df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = n
 fig1 = ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
 ```
 
-### PCA 
 ```{r plot.pca.featureCounts37, fig.height=5}
 idx = rowSums(geneExpr>1) >= 500
  
