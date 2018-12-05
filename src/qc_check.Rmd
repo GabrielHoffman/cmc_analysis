@@ -461,7 +461,7 @@ ggplot(df, aes(lib.size.x, lib.size.y, color=dataset)) + geom_point() + theme_bw
 synID_array = c('HBCC' = 'syn16783660', 
         'CMC_PFC' = 'syn16783867', 
         'CMC_ACC' = 'syn16783596')
-
+ 
 # plot for each dataset
 df_qc = foreach( id = names(synID_array), .combine=rbind ) %do% {
 
@@ -481,7 +481,7 @@ ggplot(df_qc, aes(Mapped/TotalReads)) + geom_histogram()
 synID_array = c('HBCC' = 'syn16783665', 
         'CMC_PFC' = 'syn16783868', 
         'CMC_ACC' = 'syn16783597')
-
+ 
 # plot for each dataset
 df_star = foreach( id = names(synID_array), .combine=rbind ) %do% {
 
