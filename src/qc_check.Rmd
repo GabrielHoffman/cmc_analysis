@@ -230,7 +230,6 @@ Genes in PCA: `r sum(idx)`
 grid.arrange(fig1, fig2, ncol=2, top=textGrob('kallisto hg38', gp=gpar(fontsize=20)))
 ```
 
-# featureCounts
 ```{r define.data.featureCounts}
 # define file locations
 # FPKM
@@ -277,7 +276,7 @@ dataMergeCounts$Geneid = c()
 library(edgeR)
 
 idx = rowSums(dataMergeCounts>10) >= 500
-table(idx)
+# table(idx)
 
 dge = DGEList( counts = dataMergeCounts[idx,])
 dge = calcNormFactors( dge )
@@ -384,7 +383,7 @@ dataMergeCounts$Geneid = c()
 library(edgeR)
 
 idx = rowSums(dataMergeCounts>10) >= 500
-table(idx)
+# table(idx)
 
 dge = DGEList( counts = dataMergeCounts[idx,])
 dge = calcNormFactors( dge )
