@@ -69,7 +69,7 @@ XIST_ens = 'ENSG00000229807'
 UTY_ens = 'ENSG00000183878'
 ```
 
-```{r getdata, echo=FALSE}
+```{r getdata, echo=FALSE, message=FALSE}
 
 # plot for each dataset
 geneExpress = foreach( id = names(synID_array) ) %do% {
