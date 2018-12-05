@@ -428,7 +428,7 @@ ylab = paste('PC2', format(100*dcmp@R2[2], digits=3), '%')
 fig2 = ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(xlab) + ylab(ylab)
 ```
 
-```{r featureCounts37}
+```{r featureCounts37, fig.width=12}
 grid.arrange(fig1, fig2, ncol=2)
 ```
 
