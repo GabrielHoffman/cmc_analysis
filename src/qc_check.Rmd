@@ -135,7 +135,7 @@ fig2 = ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15)
 
 Genes in PCA: `r sum(idx)`
 
-```{r RSEM, fig.width=12}
+```{r RSEM, fig.width=15}
 grid.arrange(fig1, fig2, ncol=2, top='RSEM hg38')
 ```
 
@@ -230,7 +230,7 @@ fig2 = ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15)
 
 Genes in PCA: `r sum(idx)`
 
-```{r kallisto, fig.width=12}
+```{r kallisto, fig.width=15}
 grid.arrange(fig1, fig2, ncol=2, top='kallisto hg38')
 ```
 
@@ -329,7 +329,7 @@ fig2 = ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15)
 
 Genes in PCA: `r sum(idx)`
 
-```{r featureCounts, fig.width=12}
+```{r featureCounts, fig.width=15}
 grid.arrange(fig1, fig2, ncol=2, top='featureCounts hg38')
 ```
 
