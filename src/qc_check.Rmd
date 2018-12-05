@@ -95,7 +95,7 @@ dataMerge$gene_id = c()
 dataMerge = log2(dataMerge+0.1)
 ```
 
-## Plot sex genes
+### Plot sex genes
 ```{r plot.sex_genes, fig.height=3}
 
 XIST_ens = 'ENSG00000229807'
@@ -117,8 +117,8 @@ df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = n
 ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
 ```
 
-## PCA 
-```{r plot.pca}
+### PCA 
+```{r plot.pca, fig.height=5}
 idx = rowSums(dataMerge>1) >= 500
 
 dcmp = pca( dataMerge[idx,], nPcs=2)
@@ -128,7 +128,9 @@ df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[1]])] = names(geneExpre
 df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
 df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
 
-ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(aes())
+xlab = paste('PC1', format(100*dcmp@R2[1], digits=3), '%')
+ylab = paste('PC2', format(100*dcmp@R2[2], digits=3), '%')
+ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(xlab) + ylab(ylab)
 ```
 
 Genes in PCA: `r sum(idx)`
@@ -185,7 +187,7 @@ dataMerge$gene_id = c()
 dataMerge = log2(dataMerge+0.1)
 ```
 
-## Plot sex genes
+### Plot sex genes
 ```{r plot.sex_genes.kallisto, fig.height=3}
 
 XIST_ens = 'ENSG00000229807'
@@ -207,8 +209,8 @@ df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = n
 ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
 ```
 
-## PCA 
-```{r plot.pca.kallisto}
+### PCA 
+```{r plot.pca.kallisto, fig.height=5}
 idx = rowSums(dataMerge>1) >= 500
 
 dcmp = pca( dataMerge[idx,], nPcs=2)
@@ -218,7 +220,9 @@ df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[1]])] = names(geneExpre
 df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
 df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
 
-ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(aes())
+xlab = paste('PC1', format(100*dcmp@R2[1], digits=3), '%')
+ylab = paste('PC2', format(100*dcmp@R2[2], digits=3), '%')
+ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(xlab) + ylab(ylab)
 ```
 
 Genes in PCA: `r sum(idx)`
@@ -279,7 +283,7 @@ dge = calcNormFactors( dge )
 geneExpr = cpm( dge, log=TRUE)
 ```
 
-## Plot sex genes
+### Plot sex genes
 ```{r plot.sex_genes.featureCounts, fig.height=3}
 
 XIST_ens = 'ENSG00000229807'
@@ -301,8 +305,8 @@ df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = n
 ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
 ```
 
-## PCA 
-```{r plot.pca.featureCounts}
+### PCA 
+```{r plot.pca.featureCounts, fig.height=5}
 idx = rowSums(geneExpr>1) >= 500
  
 dcmp = pca( geneExpr[idx,], nPcs=2)
@@ -312,7 +316,9 @@ df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[1]])] = names(geneExpre
 df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
 df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
 
-ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(aes())
+xlab = paste('PC1', format(100*dcmp@R2[1], digits=3), '%')
+ylab = paste('PC2', format(100*dcmp@R2[2], digits=3), '%')
+ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(xlab) + ylab(ylab)
 ```
 
 Genes in PCA: `r sum(idx)`
@@ -384,7 +390,7 @@ dge = calcNormFactors( dge )
 geneExpr = cpm( dge, log=TRUE)
 ```
 
-## Plot sex genes
+### Plot sex genes
 ```{r plot.sex_genes.featureCounts37, fig.height=3}
 
 XIST_ens = 'ENSG00000229807'
@@ -406,18 +412,20 @@ df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = n
 ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
 ```
 
-## PCA 
-```{r plot.pca.featureCounts37}
+### PCA 
+```{r plot.pca.featureCounts37, fig.height=5}
 idx = rowSums(geneExpr>1) >= 500
  
-dcmp = pca( geneExpr[idx,], nPcs=2)
+dcmp = pca( geneExpr[idx,])
 
 df_pc = data.frame(dcmp@loadings)
 df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[1]])] = names(geneExpress)[1]
 df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
 df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
 
-ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(aes())
+xlab = paste('PC1', format(100*dcmp@R2[1], digits=3), '%')
+ylab = paste('PC2', format(100*dcmp@R2[2], digits=3), '%')
+ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(xlab) + ylab(ylab)
 ```
 
 Genes in PCA: `r sum(idx)`
