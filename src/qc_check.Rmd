@@ -135,7 +135,7 @@ fig2 = ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15)
 Genes in PCA: `r sum(idx)`
 
 ```{r RSEM, fig.width=15}
-grid.arrange(fig1, fig2, ncol=2, top=textGrob('RSEM hg38', gp=gpar(fontsize=20)) )
+grid.arrange(fig1, fig2, ncol=2, top=textGrob('RSEM hg38', gp=gpar(fontsize=40)) )
 ```
 
 ```{r define.data.kallisto}
@@ -227,7 +227,7 @@ fig2 = ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15)
 Genes in PCA: `r sum(idx)`
 
 ```{r kallisto, fig.width=15}
-grid.arrange(fig1, fig2, ncol=2, top=textGrob('kallisto hg38', gp=gpar(fontsize=20)))
+grid.arrange(fig1, fig2, ncol=2, top=textGrob('kallisto hg38', gp=gpar(fontsize=40)))
 ```
 
 ```{r define.data.featureCounts}
@@ -323,7 +323,7 @@ fig2 = ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15)
 Genes in PCA: `r sum(idx)`
 
 ```{r featureCounts, fig.width=15}
-grid.arrange(fig1, fig2, ncol=2, top=textGrob('featureCounts hg38', gp=gpar(fontsize=20)))
+grid.arrange(fig1, fig2, ncol=2, top=textGrob('featureCounts hg38', gp=gpar(fontsize=40)))
 ```
 
 
@@ -428,7 +428,7 @@ fig2 = ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15)
 ```
 
 ```{r featureCounts37, fig.width=15}
-grid.arrange(fig1, fig2, ncol=2, top=textGrob('featureCounts hg19', gp=gpar(fontsize=20)))
+grid.arrange(fig1, fig2, ncol=2, top=textGrob('featureCounts hg19', gp=gpar(fontsize=40)))
 ```
 
 Genes in PCA: `r sum(idx)`
