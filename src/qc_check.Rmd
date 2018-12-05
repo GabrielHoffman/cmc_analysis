@@ -114,7 +114,7 @@ df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[2]])] = n
 df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
 
 # make plot
-ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
+fig1 = ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
 ```
 
 ### PCA 
@@ -130,11 +130,14 @@ df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[3]])] = names(geneExpre
 
 xlab = paste('PC1', format(100*dcmp@R2[1], digits=3), '%')
 ylab = paste('PC2', format(100*dcmp@R2[2], digits=3), '%')
-ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(xlab) + ylab(ylab)
+fig2 = ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(xlab) + ylab(ylab)
 ```
 
 Genes in PCA: `r sum(idx)`
 
+```{r RSEM, fig.width=12}
+grid.arrange(fig1, fig2, ncol=2) + ggtitle('RSEM hg38')
+```
 
 # kallisto
 ```{r define.data.kallisto}
@@ -206,7 +209,7 @@ df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[2]])] = n
 df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
 
 # make plot
-ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
+fig1 = ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
 ```
 
 ### PCA 
@@ -222,11 +225,14 @@ df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[3]])] = names(geneExpre
 
 xlab = paste('PC1', format(100*dcmp@R2[1], digits=3), '%')
 ylab = paste('PC2', format(100*dcmp@R2[2], digits=3), '%')
-ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(xlab) + ylab(ylab)
+fig2 = ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(xlab) + ylab(ylab)
 ```
 
 Genes in PCA: `r sum(idx)`
 
+```{r kallisto, fig.width=12}
+grid.arrange(fig1, fig2, ncol=2)  + ggtitle('kallisto hg38')
+```
 
 # featureCounts
 ```{r define.data.featureCounts}
@@ -302,7 +308,7 @@ df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[2]])] = n
 df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
 
 # make plot
-ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
+fig1 = ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
 ```
 
 ### PCA 
@@ -318,11 +324,14 @@ df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[3]])] = names(geneExpre
 
 xlab = paste('PC1', format(100*dcmp@R2[1], digits=3), '%')
 ylab = paste('PC2', format(100*dcmp@R2[2], digits=3), '%')
-ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(xlab) + ylab(ylab)
+fig2 = ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(xlab) + ylab(ylab)
 ```
 
 Genes in PCA: `r sum(idx)`
 
+```{r featureCounts, fig.width=12}
+grid.arrange(fig1, fig2, ncol=2) + ggtitle('featureCounts hg38')
+```
 
 
 # featureCounts, hg37
@@ -428,8 +437,8 @@ ylab = paste('PC2', format(100*dcmp@R2[2], digits=3), '%')
 fig2 = ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(xlab) + ylab(ylab)
 ```
 
-```{r featureCounts37, fig.width=12}
-grid.arrange(fig1, fig2, ncol=2)
+```{r featureCounts37, fig.width=15}
+grid.arrange(fig1, fig2, ncol=2) + ggtitle('featureCounts + hg19')
 ```
 
 Genes in PCA: `r sum(idx)`
