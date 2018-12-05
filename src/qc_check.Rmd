@@ -326,6 +326,11 @@ Genes in PCA: `r sum(idx)`
 grid.arrange(fig1, fig2, ncol=2, top=textGrob('featureCounts hg38', gp=gpar(fontsize=40)))
 ```
 
+```{r featureCounts.hist}
+# df_fc38 = dge$samples
+df_fc38 = data.frame(lib.size=colSums(dataMergeCounts))
+
+```
 
 ```{r define.data.featureCounts37}
 # define file locations
@@ -432,6 +437,93 @@ grid.arrange(fig1, fig2, ncol=2, top=textGrob('featureCounts hg19', gp=gpar(font
 ```
 
 Genes in PCA: `r sum(idx)`
+
+
+```{r featureCounts.hist37}
+df_fc37 = dge$samples
+df_fc37 = data.frame(lib.size=colSums(dataMergeCounts))
+```
+
+## count reads from featureCounts
+```{r compare.reads}
+df = merge(df_fc37, df_fc38, by='row.names')
+
+df$dataset[df$Row.names %in% colnames(geneExpress[[1]])] = names(geneExpress)[1]
+df$dataset[df$Row.names %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
+df$dataset[df$Row.names %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
+
+xlim = c(0,max(c(df$lib.size.x, df$lib.size.y)))
+ggplot(df, aes(lib.size.x, lib.size.y, color=dataset)) + geom_point() + theme_bw(20) + theme(aspect.ratio=1) + geom_abline() + xlim(xlim) + ylim(xlim) + xlab("hg19") + ylab("hg38") + ggtitle("Number of reads by featureCounts")
+```
+
+## count reads from RNAQC
+```{r compare.reads.RNAQC}
+synID_array = c('HBCC' = 'syn16783660', 
+        'CMC_PFC' = 'syn16783867', 
+        'CMC_ACC' = 'syn16783596')
+
+# plot for each dataset
+df_qc = foreach( id = names(synID_array), .combine=rbind ) %do% {
+
+  synID = synID_array[id]
+
+  # read data
+  fread( synGet(as.character(synID))$path )
+}
+
+ggplot(df_qc, aes(Mapped/TotalReads)) + geom_histogram()
+```
+
+
+
+## count reads from STAR
+```{r compare.reads.STAR}
+synID_array = c('HBCC' = 'syn16783665', 
+        'CMC_PFC' = 'syn16783868', 
+        'CMC_ACC' = 'syn16783597')
+
+# plot for each dataset
+df_star = foreach( id = names(synID_array), .combine=rbind ) %do% {
+
+  synID = synID_array[id]
+
+  # read data
+  df = fread( synGet(as.character(synID))$path )
+  df = t(df)
+  colnames(df) = df[1,]
+  df = data.frame( df[-1,], stringsAsFactors=FALSE )
+  df$ID = rownames(df)
+  df
+}
+
+synID_array = c('HBCC' = 'syn8539839')
+
+# plot for each dataset
+df_qc_hg19 = foreach( id = names(synID_array), .combine=rbind ) %do% {
+
+  synID = synID_array[id]
+
+  # read data
+  fread( synGet(as.character(synID))$path )
+}
+
+df_qc_hg19 = with(df_qc_hg19, data.frame(V1=Sample, UNIQUE_READS._Uniquely_mapped_reads_number, BASIC_STATS._Number_of_input_reads, stringsAsFactors=FALSE))
+
+df_qc_combine = merge(df_star, df_qc_hg19, by.x="ID", by.y="V1")
+
+df_qc_combine$dataset[df_qc_combine$ID %in% colnames(geneExpress[[1]])] = names(geneExpress)[1]
+df_qc_combine$dataset[df_qc_combine$ID %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
+df_qc_combine$dataset[df_qc_combine$ID %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
+
+# df_qc_combine$BASIC_STATS._Number_of_input_reads
+# df_qc_combine$Number.of.input.reads
+
+xlim = c(0,with(df_qc_combine, max(c(BASIC_STATS._Number_of_input_reads, as.numeric(Number.of.input.reads)))))
+ggplot(df_qc_combine, aes(BASIC_STATS._Number_of_input_reads, as.numeric(Number.of.input.reads), color=dataset)) + geom_point() + geom_abline() + theme_bw(20) + theme(aspect.ratio=1) + xlim(xlim) + ylim(xlim) + xlab("hg19") + ylab("hg38") + ggtitle("Number of reads by couting from STAR")
+```
+
+
+
 
 
 
