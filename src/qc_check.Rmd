@@ -159,7 +159,7 @@ UTY_ens = 'ENSG00000183878'
 # plot for each dataset
 geneExpress = foreach( id = names(synID_array) ) %do% {
 
-  synID = synID_array[id]
+  synID = synID_array[id]  
 
   # read data
   df_tpm = fread( synGet(as.character(synID))$path)
@@ -252,7 +252,7 @@ UTY_ens = 'ENSG00000183878'
 geneExpress = foreach( id = names(synID_array) ) %do% {
 
   synID = synID_array[id]
-
+   
   # read data
   df_Counts = fread( synGet(as.character(synID))$path)
   df_Counts = df_Counts[,-c(2:6)]
