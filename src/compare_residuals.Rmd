@@ -34,6 +34,7 @@ library(ggplot2)
 library(gridExtra)
 library(grid)
 library(tidyverse)
+library(variancePartition)
 library(synapser)
 
 synLogin()
@@ -72,19 +73,34 @@ corRes = sapply( res_std$ensembl_gene_id, function(ensGene){
 
 # 
 ```{r plot.correlation, echo=TRUE}
-hist(corRes, main="Correlation between residuals from lmFit and dream")
+hist(corRes, main="Correlation between residuals from old version and dream")
 ```
 
-```{r load.counts}
+```{r load.counts, echo=FALSE}
 # load counts
-# counts_filtered = read_tsv( synGet("syn21482405")$path )
+counts_filtered_std = read_tsv( synGet("syn21482405")$path )
+counts_filtered_dream = read_tsv( synGet("syn21548435")$path )
 
-# geneMean = rowMeans(counts_filtered[,-1], na.rm=TRUE)
-# names(geneMean) = counts_filtered$ensembl_gene_id
+cov_std = read_tsv( synGet("syn21482397")$path )
+cov_dream = read_tsv( synGet("syn21548433")$path )
 
-# identical(names(geneMean), names(corRes))
+# create formula
+colType =  cov_dream %>% dplyr::summarise_all(class) %>%   tidyr::gather(variable, class)
 
-# plot(geneMean, corRes)
+form = sapply( 2:nrow(colType), function(i){
+
+  switch(colType$class[i], 
+    "character" = paste0('(1|', colType$variable[i], ')'),
+    "numeric" = colType$variable[i])
+  })
+form = as.formula(paste('~', paste(form, collapse=" + ")))
+
+
+geneExpr = as.matrix(counts_filtered_std[1:3,-1])
+geneExpr[is.na(geneExpr)] = 0
+rownames(geneExpr) = (counts_filtered_std %>% select(ensembl_gene_id))[1:3]
+
+fit_1 = dream( geneExpr, form, as.data.frame(cov_std))
 
 ```
 
