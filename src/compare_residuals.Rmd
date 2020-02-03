@@ -1,0 +1,89 @@
+---
+title: "Analysis of CMC III"
+
+author: "Gabriel Hoffman"
+date: "Run on `r Sys.Date()`"
+documentclass: article
+output: 
+  html_document:
+  toc: true
+  smart: false
+vignette: >
+  %\VignetteIndexEntry{CMC II}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  %\usepackage[utf8]{inputenc}
+---
+
+<!--- 
+
+# run analysis
+cd /sc/orga/projects/CommonMind/hoffman/cmc_analysis
+ml openssl
+R
+
+
+rmarkdown::render("compare_residuals.Rmd", output_dir='./', intermediates_dir='./')
+--->
+
+
+```{r load.packages, echo=FALSE, message=FALSE, results='hide'}
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library(tidyverse)
+library(synapser)
+
+synLogin()
+
+options(xtable.type="html")
+
+knitr::opts_chunk$set(
+  echo=FALSE,
+  warning=FALSE,
+  message=TRUE,
+  error = FALSE,
+  tidy = FALSE,
+  cache = TRUE,
+  cache.lazy = FALSE,
+  dev = c("png", "pdf"), 
+  fig.width=7, fig.height=7)
+
+options(markdown.HTML.stylesheet = 'css/custom.css')
+```
+
+
+
+```{r load.residuals}
+# Load residuals
+res_std = read_tsv( synGet("syn21482408")$path )
+res_dream = read_tsv( synGet("syn21548452")$path ) 
+
+
+corRes = sapply( res_std$ensembl_gene_id, function(ensGene){
+	x = res_std %>% filter( ensembl_gene_id == ensGene)
+	y = res_dream %>% filter( ensembl_gene_id == ensGene)
+
+	cor(as.numeric(x[-1]), as.numeric(y[-1]), use="pairwise.complete.obs")
+})
+```
+
+# 
+```{r plot.correlation}
+hist(corRes, main="Correlation between residuals from lmFit and dream")
+```
+
+```{r load.counts}
+# load counts
+counts_filtered = read_tsv( synGet("syn21482405")$path )
+```
+
+
+
+
+
+
+
+
+
+
