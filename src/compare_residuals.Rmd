@@ -19,11 +19,13 @@ vignette: >
 
 # run analysis
 cd /sc/orga/projects/CommonMind/hoffman/cmc_analysis
-ml openssl
+ml openssl pandoc
 R
 
+rmarkdown::render("src/compare_residuals.Rmd", output_dir='./', intermediates_dir='./')
 
-rmarkdown::render("compare_residuals.Rmd", output_dir='./', intermediates_dir='./')
+# results:
+https://hoffmg01.u.hpc.mssm.edu/commonmind/hoffman/cmc_analysis/
 --->
 
 
@@ -39,9 +41,9 @@ synLogin()
 options(xtable.type="html")
 
 knitr::opts_chunk$set(
-  echo=FALSE,
+  echo=TRUE,
   warning=FALSE,
-  message=TRUE,
+  message=FALSE,
   error = FALSE,
   tidy = FALSE,
   cache = TRUE,
@@ -54,7 +56,7 @@ options(markdown.HTML.stylesheet = 'css/custom.css')
 
 
 
-```{r load.residuals}
+```{r load.residuals, echo=TRUE}
 # Load residuals
 res_std = read_tsv( synGet("syn21482408")$path )
 res_dream = read_tsv( synGet("syn21548452")$path ) 
@@ -69,14 +71,34 @@ corRes = sapply( res_std$ensembl_gene_id, function(ensGene){
 ```
 
 # 
-```{r plot.correlation}
+```{r plot.correlation, echo=TRUE}
 hist(corRes, main="Correlation between residuals from lmFit and dream")
 ```
 
 ```{r load.counts}
 # load counts
-counts_filtered = read_tsv( synGet("syn21482405")$path )
+# counts_filtered = read_tsv( synGet("syn21482405")$path )
+
+# geneMean = rowMeans(counts_filtered[,-1], na.rm=TRUE)
+# names(geneMean) = counts_filtered$ensembl_gene_id
+
+# identical(names(geneMean), names(corRes))
+
+# plot(geneMean, corRes)
+
 ```
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
