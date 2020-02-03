@@ -28,6 +28,7 @@ rmarkdown::render("src/compare_residuals.Rmd", output_dir='./', intermediates_di
 https://hoffmg01.u.hpc.mssm.edu/commonmind/hoffman/cmc_analysis/
 --->
 
+Evaluate correlation in residuals from MSSM-Penn-Pitt - ACC and DLPFC from old and dream methods.
 
 ```{r load.packages, echo=FALSE, message=FALSE, results='hide'}
 library(ggplot2)
