@@ -20,6 +20,7 @@ vignette: >
 # run analysis
 cd /sc/orga/projects/CommonMind/hoffman/cmc_analysis
 ml openssl pandoc
+export OMP_NUM_THREADS=1
 R
 
 rmarkdown::render("src/compare_residuals.Rmd", output_dir='./', intermediates_dir='./')
@@ -118,7 +119,7 @@ form = as.formula(paste('~', paste(form, collapse=" + ")))
 ```
 
 # Compare ACC and DLPFC from same individual
-```{r vp}
+```{r voom.setup}
 
 counts = read_tsv( synGet("syn21548434")$path )
 
@@ -128,13 +129,22 @@ rownames(M) = counts$ensembl_gene_id
 dge = DGEList(M)
 dge = calcNormFactors(dge)
 
-vobj = voomWithDreamWeights( dge[1:10,], form, cov_dream)
+vobj = voomWithDreamWeights( dge, form, cov_dream)
+```
 
+```{r plot.voom}
+plot(vobj)
+```
 
+```{r vp}
 vp = fitExtractVarPartModel( vobj, form, cov_dream)
-
-
 ```    
+
+```{r plot.vp}
+plotVarPart(sortCols(vp))
+```
+
+
 
 
 
