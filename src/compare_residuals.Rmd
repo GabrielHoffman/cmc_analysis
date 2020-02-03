@@ -2,7 +2,7 @@
 title: "Analysis of CMC III"
 
 author: "Gabriel Hoffman"
-date: "Run on `r Sys.Date()`"
+date: "Run on `r Sys.time()`"
 documentclass: article
 output: 
   html_document:
@@ -138,7 +138,7 @@ plot(vobj)
 ```
 
 ```{r vp}
-vp = fitExtractVarPartModel( vobj[1:10,], form, cov_dream)
+vp = fitExtractVarPartModel( vobj, form, cov_dream)
 ```    
 
 ```{r plot.vp}
