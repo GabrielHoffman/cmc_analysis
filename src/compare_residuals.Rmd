@@ -42,7 +42,7 @@ library(synapser)
 
 synLogin()
 
-register(SnowParam(12, "SOCK", progress_bar=TRUE))
+register(SnowParam(12, "SOCK", progressbar=TRUE))
 
 options(xtable.type="html")
 
@@ -131,7 +131,7 @@ dge = calcNormFactors(dge)
 vobj = voomWithDreamWeights( dge[1:10,], form, cov_dream)
 
 
-vp = fitExtractVarPartModel( counts_filtered_dream[1:10,-1], form, cov_dream)
+vp = fitExtractVarPartModel( vobj, form, cov_dream)
 
 
 ```    
