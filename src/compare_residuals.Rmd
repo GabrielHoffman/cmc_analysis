@@ -96,11 +96,11 @@ form = sapply( 2:nrow(colType), function(i){
 form = as.formula(paste('~', paste(form, collapse=" + ")))
 
 
-geneExpr = as.matrix(counts_filtered_std[1:3,-1])
-geneExpr[is.na(geneExpr)] = 0
-rownames(geneExpr) = (counts_filtered_std %>% select(ensembl_gene_id))[1:3]
+# geneExpr = as.matrix(counts_filtered_std[1:3,-1])
+# geneExpr[is.na(geneExpr)] = 0
+# rownames(geneExpr) = (counts_filtered_std %>% select(ensembl_gene_id))[1:3]
 
-fit_1 = dream( geneExpr, form, as.data.frame(cov_std))
+# fit_1 = dream( geneExpr, form, as.data.frame(cov_std))
 
 ```
 
