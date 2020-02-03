@@ -98,6 +98,7 @@ counts_filtered_dream = read_tsv( synGet("syn21548435")$path )
 
 cov_std = read_tsv( synGet("syn21482397")$path )
 cov_dream = read_tsv( synGet("syn21548433")$path )
+cov_dream$Tissue = gsub(".*_(\\S+)$", "\\1", cov_dream$Dx.Tissue)
 
 # create formula
 colType =  cov_dream %>% dplyr::summarise_all(class) %>%   tidyr::gather(variable, class)
@@ -141,16 +142,40 @@ plot(vobj)
 vp = fitExtractVarPartModel( vobj, form, cov_dream)
 ```    
 
-```{r plot.vp}
+```{r plot.vp, cache=FALSE}
 plotVarPart(sortCols(vp))
 ```
 
 
 
+```{r cor.region}
+
+hasReps = cov_dream %>% select(Individual_ID) %>% table
 
 
+df_dlpfc = cov_dream %>% filter( Individual_ID %in% names(hasReps[hasReps==2])) %>% filter(grepl("DLPFC", Dx.Tissue)) %>% select(SampleID, Individual_ID, Dx.Tissue)
+df_acc = cov_dream %>% filter( Individual_ID %in% names(hasReps[hasReps==2])) %>% filter(grepl("ACC", Dx.Tissue)) %>% select(SampleID, Individual_ID, Dx.Tissue)
 
+df_merge = merge( df_dlpfc, df_acc, by="Individual_ID")
 
+corRes = sapply( res_std$ensembl_gene_id, function(ensGene){
+
+  x = vobj$E[ensGene,df_merge$SampleID.x,drop=FALSE]
+  y = vobj$E[ensGene,df_merge$SampleID.y,drop=FALSE]
+
+  cor(t(x)[,1], t(y)[,1], use="pairwise.complete.obs")
+})
+
+hist(corRes, xlab="Correlation", main="Correlation between ACC and DLPFC sample from the sample individual for each gene from ")
+```
+
+```{r pca}
+pca = prcomp(t(vobj$E))
+
+df_pca = merge(pca$x, as.data.frame(cov_dream), by.x="row.names", by.y="SampleID" )
+
+ggplot(df_pca, aes(PC1, PC2, color=Tissue, shape=Institution)) + geom_point() + theme_bw(17) + theme(aspect.ratio=1)
+```
 
 
 
