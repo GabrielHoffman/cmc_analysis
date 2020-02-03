@@ -73,7 +73,7 @@ corRes = sapply( res_std$ensembl_gene_id, function(ensGene){
 
 # 
 ```{r plot.correlation, echo=TRUE}
-hist(corRes, main="Correlation between residuals from old version and dream")
+hist(corRes, main="Correlation between residuals from old version and dream", xlab="Correlation")
 ```
 
 ```{r load.counts, echo=FALSE}
