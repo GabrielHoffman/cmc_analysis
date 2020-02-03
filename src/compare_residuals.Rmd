@@ -36,9 +36,13 @@ library(gridExtra)
 library(grid)
 library(tidyverse)
 library(variancePartition)
+library(BiocParallel)
+library(edgeR)
 library(synapser)
 
 synLogin()
+
+register(SnowParam(12, "SOCK", progress_bar=TRUE))
 
 options(xtable.type="html")
 
@@ -96,7 +100,7 @@ cov_dream = read_tsv( synGet("syn21548433")$path )
 # create formula
 colType =  cov_dream %>% dplyr::summarise_all(class) %>%   tidyr::gather(variable, class)
 
-form = sapply( 2:nrow(colType), function(i){
+form = sapply( 2:9, function(i){
 
   switch(colType$class[i], 
     "character" = paste0('(1|', colType$variable[i], ')'),
@@ -113,7 +117,24 @@ form = as.formula(paste('~', paste(form, collapse=" + ")))
 
 ```
 
+# Compare ACC and DLPFC from same individual
+```{r vp}
 
+counts = read_tsv( synGet("syn21548434")$path )
+
+M = as.matrix(counts[,-1])
+rownames(M) = counts$ensembl_gene_id
+
+dge = DGEList(M)
+dge = calcNormFactors(dge)
+
+vobj = voomWithDreamWeights( dge[1:10,], form, cov_dream)
+
+
+vp = fitExtractVarPartModel( counts_filtered_dream[1:10,-1], form, cov_dream)
+
+
+```    
 
 
 
