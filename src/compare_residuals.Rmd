@@ -77,6 +77,14 @@ corRes = sapply( res_std$ensembl_gene_id, function(ensGene){
 hist(corRes, main="Correlation between residuals from old version and dream", xlab="Correlation")
 ```
 
+``{r plot.ecdf}
+df = data.frame(corr=corRes)
+ggplot(df, aes(corr)) + stat_ecdf(geom = "step") + theme_bw(17) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=0.95, color="red", linetype="dashed") + geom_vline(xintercept=0.90, color="darkgreen", linetype="dashed") + ggtitle("Empirical CDF") + ylab("Fraction greater than X") + xlab("Correlation")
+```
+
+`r format(sum(corRes>0.95) / length(corRes), digits=3)`% of genes have a correlation > 0.95, and `r format(sum(corRes>0.90) / length(corRes), digits=3)`% of genes have a correlation > 0.90.
+
+
 ```{r load.counts, echo=FALSE}
 # load counts
 counts_filtered_std = read_tsv( synGet("syn21482405")$path )
