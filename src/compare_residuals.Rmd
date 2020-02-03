@@ -77,7 +77,7 @@ corRes = sapply( res_std$ensembl_gene_id, function(ensGene){
 hist(corRes, main="Correlation between residuals from old version and dream", xlab="Correlation")
 ```
 
-``{r plot.ecdf}
+```{r plot.ecdf}
 df = data.frame(corr=corRes)
 ggplot(df, aes(corr)) + stat_ecdf(geom = "step") + theme_bw(17) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept=0.95, color="red", linetype="dashed") + geom_vline(xintercept=0.90, color="darkgreen", linetype="dashed") + ggtitle("Empirical CDF") + ylab("Fraction greater than X") + xlab("Correlation")
 ```
