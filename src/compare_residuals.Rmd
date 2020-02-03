@@ -37,6 +37,7 @@ library(gridExtra)
 library(grid)
 library(tidyverse)
 library(variancePartition)
+library(rationale)
 library(BiocParallel)
 library(edgeR)
 library(synapser)
@@ -137,7 +138,7 @@ plot(vobj)
 ```
 
 ```{r vp}
-vp = fitExtractVarPartModel( vobj, form, cov_dream)
+vp = fitExtractVarPartModel( vobj[1:10,], form, cov_dream)
 ```    
 
 ```{r plot.vp}
