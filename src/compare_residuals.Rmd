@@ -129,7 +129,7 @@ rownames(M) = counts$ensembl_gene_id
 dge = DGEList(M)
 dge = calcNormFactors(dge)
 
-vobj = voomWithDreamWeights( dge, form, cov_dream)
+vobj = voomWithDreamWeights( dge, form, cov_dream, save.plot=TRUE)
 ```
 
 ```{r plot.voom}
