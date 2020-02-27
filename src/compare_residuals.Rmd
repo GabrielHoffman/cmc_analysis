@@ -149,9 +149,7 @@ plotVarPart(sortCols(vp))
 
 
 ```{r cor.region}
-
 hasReps = cov_dream %>% select(Individual_ID) %>% table
-
 
 df_dlpfc = cov_dream %>% filter( Individual_ID %in% names(hasReps[hasReps==2])) %>% filter(grepl("DLPFC", Dx.Tissue)) %>% select(SampleID, Individual_ID, Dx.Tissue)
 df_acc = cov_dream %>% filter( Individual_ID %in% names(hasReps[hasReps==2])) %>% filter(grepl("ACC", Dx.Tissue)) %>% select(SampleID, Individual_ID, Dx.Tissue)

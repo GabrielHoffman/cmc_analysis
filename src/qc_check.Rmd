@@ -523,6 +523,117 @@ ggplot(df_qc_combine, aes(BASIC_STATS._Number_of_input_reads, as.numeric(Number.
 ```
 
 
+## Panos's RSEM
+
+```{r define.data.rsem}
+# define file locations
+
+# TPM give same qualitative results
+synID_array = c('HBCC' = 'syn16783088', 
+        'CMC_PFC' = 'syn16783522', 
+        'CMC_ACC' = 'syn16783578')
+
+# get sex genes
+XIST_ens = 'ENSG00000229807'
+UTY_ens = 'ENSG00000183878'
+```
+
+```{r getdata.rsem, echo=FALSE, message=FALSE}
+
+# plot for each dataset
+geneExpress = foreach( id = names(synID_array) ) %do% {
+
+  synID = synID_array[id]
+
+  # read data
+  df_tpm = fread( synGet(as.character(synID))$path)
+  # df_tpm$ensID = sapply(strsplit(df_tpm$gene_id, '\\.'), function(x) x[1])
+  df_tpm = df_tpm[,-2]
+}
+names(geneExpress) = names(synID_array) 
+
+# merge 3 datasets
+dataMerge = merge(geneExpress[[1]], geneExpress[[2]], by='gene_id')
+dataMerge = merge(dataMerge, geneExpress[[3]], by='gene_id')
+
+dataMerge$gene_id = sapply(strsplit(dataMerge$gene_id, "\\."), function(x) x[1])
+dataMerge = dataMerge[!duplicated(dataMerge$gene_id),]
+
+load("~/Downloads/gene_expression.Rdata")
+TPM$gene_id = sapply(strsplit(rownames(TPM), "\\."), function(x) x[1])
+TPM = TPM[!duplicated(TPM$gene_id),]
+
+dataMerge2 = merge(dataMerge, TPM, by='gene_id')
+
+dataMerge2 = data.frame(dataMerge2)
+rownames(dataMerge2) = dataMerge2$gene_id
+dataMerge2$gene_id = c()
+colnames(dataMerge2) = gsub("\\.x$",'', colnames(dataMerge2))
+
+# get log2 FPKM
+dataMerge = log2(dataMerge2+0.1)
+```
+
+
+```{r plot.sex_genes.rsem, fig.height=3}
+
+XIST_ens = 'ENSG00000229807'
+UTY_ens = 'ENSG00000183878'
+
+i = grep(XIST_ens, rownames(dataMerge))
+j = grep(UTY_ens, rownames(dataMerge))
+
+df_sex_genes = data.frame(XIST = t(dataMerge[i,]),
+          UTY = t(dataMerge[j,]))
+colnames(df_sex_genes) = c('XIST', 'UTY')
+
+# get dataset
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[1]])] = names(geneExpress)[1]
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
+df_sex_genes$dataset[rownames(df_sex_genes) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
+
+# make plot
+fig1 = ggplot(df_sex_genes, aes(XIST, UTY)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + facet_wrap(~dataset)
+```
+
+```{r plot.pca.rsem, fig.height=5}
+idx = rowSums(dataMerge>1) >= 500
+
+dcmp = pca( dataMerge[idx,], nPcs=2)
+
+df_pc = data.frame(dcmp@loadings)
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[1]])] = names(geneExpress)[1]
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[2]])] = names(geneExpress)[2]
+df_pc$dataset[rownames(df_pc) %in% colnames(geneExpress[[3]])] = names(geneExpress)[3]
+
+xlab = paste('PC1', format(100*dcmp@R2[1], digits=3), '%')
+ylab = paste('PC2', format(100*dcmp@R2[2], digits=3), '%')
+fig2 = ggplot(df_pc, aes(PC1, PC2, color=dataset)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1) + xlab(xlab) + ylab(ylab)
+```
+
+Genes in PCA: `r sum(idx)`
+
+```{r combine.rsem, fig.width=15}
+grid.arrange(fig1, fig2, ncol=2, top=textGrob('RSEM hg38', gp=gpar(fontsize=40)) )
+```
+
+
+df2 = df_sex_genes[is.na(df_sex_genes$dataset),]
+df2$type = sapply(strsplit(rownames(df2), '\\.'), function(x) x[2])
+# df2$type = rownames(df2)
+
+ggplot(df2, aes(XIST, UTY, color=type)) + geom_point()
+
+
+
+
+
+
+
+RSEM on hg19 + GENCODE19
+
+featureCounts -s2 
+rSEM --forward-prob 0
 
 
 
