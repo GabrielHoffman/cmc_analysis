@@ -25,7 +25,7 @@ setkey(df_gene, "gene_id")
 ensGenes = unique( df_gene$gene_id )
 
 res_gene = lapply( ensGenes, function(ensGene){
-	df_gene[gene_id==ensGene,data.frame(seqnames, start, end, strand, type, gene_id, gene_name, gene_type)]
+	df_gene[gene_id==ensGene,data.frame(seqnames, start, end, strand, type, gene_id, gene_name, gene_type, stringsAsFactors=FALSE)]
 })
 res_gene = data.table(do.call("rbind", res_gene))
 
@@ -42,8 +42,8 @@ setkey(df_tr, "gene_id")
 
 ensGenes = unique( df_tr$gene_id )
 
-res_tr = lapply( ensGenes, function(ensGene){
-	df_tr[gene_id==ensGene,data.frame(seqnames, start, end, strand, type, gene_id, gene_name, gene_type, transcript_id, transcript_type)]
+res_tr = lapply( ensGenes[1:1000], function(ensGene){
+	df_tr[gene_id==ensGene,data.frame(seqnames, start, end, strand, type, gene_id, gene_name, gene_type, transcript_id, transcript_type, stringsAsFactors=FALSE)]
 })
 res_tr = do.call("rbind", res_tr)
 
