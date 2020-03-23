@@ -42,10 +42,10 @@ setkey(df_tr, "gene_id")
 
 ensGenes = unique( df_tr$gene_id )
 
-res_tr = lapply( ensGenes[1:1000], function(ensGene){
+res_tr = lapply( ensGenes, function(ensGene){
 	df_tr[gene_id==ensGene,data.frame(seqnames, start, end, strand, type, gene_id, gene_name, gene_type, transcript_id, transcript_type, stringsAsFactors=FALSE)]
 })
-res_tr = do.call("rbind", res_tr)
+res_tr = data.table(do.call("rbind", res_tr))
 
 res_tr[,TSS:=ifelse(strand=='+', start, end)]
 res_tr[,TES:=ifelse(strand=='+', end, start)]
