@@ -80,12 +80,13 @@ geneCounts = geneCounts[,-idx]
 exclude = duplicated(geneInfo$EnsId)
 geneInfo = geneInfo[!exclude,]
 geneCounts = geneCounts[!exclude,]
-rownames(geneCounts) = gsub("^(.*)(\\.\\S+)$", "\\1", geneInfo$Geneid)
+rownames(geneCounts) = gsub("^(.*)(\\.\\S+)$", "\\1", rownames(geneCounts))
+
+
 ```
 
 
 ```{r metadata}
-
 # focused on this experiment
 metadata1 = read.xlsx("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/meta-files/MolecularProfiling_MSSM_120samples_05.24.17-4.xlsx")
 
@@ -123,8 +124,13 @@ info$CellType = factor(info$CellType,names(colorCodes))
 # add information about each sample
 info = merge(info, metadata1, by.x="DissectionID", by.y='Dissection.ID')
 info = merge(info, qc_metrics, by.x="Name", by.y='row.names')
+
+
 # info = merge(info, metadataCMC, by.x='Individual.ID', by.y="Individual ID")
 #  info[1:4, 1:20]
+
+# set order to be the same as geneCounts
+info = info[match(colnames(geneCounts), info$Name),]
 
 
 df = melt(info[,c('DissectionID', 'CellType', colnames(qc_metrics)[1:10])], id.vars=c('DissectionID', 'CellType'))
@@ -146,6 +152,7 @@ table(info$Dx)
 
 ```{r preprocess}
 isexpr = rowSums(cpm(geneCounts)>1) >= 0.1*ncol(geneCounts)
+table(isexpr)
 
 dge = DGEList( geneCounts[isexpr,] )
 dge = calcNormFactors(dge)
@@ -171,27 +178,25 @@ ggplot(df_pca, aes(PC1, PC2, color=CellType)) + geom_point() + theme_bw(15) + th
 
 xlab = paste0('PC2 (', format(varFrac[2]*100, digits=3), '%)')
 ylab = paste0('PC3 (', format(varFrac[3]*100, digits=3), '%)')
-ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
+ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
 ```      
 
 
 ### Differential expression
 ```{r dream}
-form = ~ (1|CellType) + (1|Individual.ID) + Gender
-form = ~ CellType
+form = ~ (1|CellType) + (1|Individual.ID) + (1|Gender)
 vobj = voomWithDreamWeights(dge, form, info, plot=TRUE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
 
-fitBasic = dream( vobj, ~ CellType + (1|Individual.ID) + Gender, info, BPPARAM=SnowParam(6, progressbar=TRUE))
+fitBasic = dream( vobj, ~ CellType + (1|Individual.ID) + (1|Gender), info, BPPARAM=SnowParam(6, progressbar=TRUE))
 
-fitDisease = dream( vobj, ~ CellType*Dx + (1|Individual.ID) + Gender, info, BPPARAM=SnowParam(6, progressbar=TRUE))
+fitDisease = dream( vobj, ~ CellType*Dx + (1|Individual.ID) + (1|Gender), info, BPPARAM=SnowParam(6, progressbar=TRUE))
 ```
 
 
 ### variancePartition
 ```{r vp}
 form = ~ (1|CellType) + (1|Dx) + (1|CellType:Dx) + (1|Individual.ID) + (1|Gender)
-form = ~ CellType
-vp = fitExtractVarPartModel( vobj, form, info, BPPARAM=SnowParam(6, progressbar=TRUE))
+vp = fitExtractVarPartModel( geneExpr, form, info, BPPARAM=SnowParam(6, progressbar=TRUE))
 
 plotVarPart( sortCols(vp) )
 ```
