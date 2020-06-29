@@ -66,7 +66,7 @@ geneInfo$EnsId = gsub("^(.*)(\\.\\S+)$", "\\1", geneInfo$Geneid)
 
 geneCounts = df_featureCounts_gene[,7:ncol(df_featureCounts_gene)]
 geneCounts = as.data.frame(geneCounts)
-rownames(counts) = geneInfo$Geneid
+rownames(geneCounts) = geneInfo$Geneid
 
 # identify samples with improper names
 idx = grep("Undetermined", colnames(geneCounts))
