@@ -14,6 +14,7 @@ output:
 <!---
 
 cd /hpc/users/hoffmg01/work/cmc_analysis/src
+rm -rf molec_profiling_cache/
 ml git pandoc
 git pull
 R
@@ -34,16 +35,13 @@ library(variancePartition)
 library(limma)
 library(edgeR)
 library(mvIC)
+library(reshape2)
 library(data.table)
 library(BiocParallel)
 library(ggplot2)
 library(gridExtra)
 library(openxlsx)
 })
-
-# set.seed(1)
-register(SnowParam(4))
-# register(SerialParam())
 
 knitr::opts_chunk$set(
   echo=FALSE,
@@ -83,7 +81,6 @@ exclude = duplicated(geneInfo$EnsId)
 geneInfo = geneInfo[!exclude,]
 geneCounts = geneCounts[!exclude,]
 rownames(geneCounts) = gsub("^(.*)(\\.\\S+)$", "\\1", geneInfo$Geneid)
-
 ```
 
 
@@ -98,6 +95,12 @@ metadataCMC = fread("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING
 
 
 ```{r QC}
+file = '/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/rnaseq/step1-merged/QCmetrics/qc_metrics.RDS'
+qc_metrics.in = t(readRDS( file ))
+colnames(qc_metrics.in) = qc_metrics.in[1,]
+qc_metrics.in = as.data.frame(qc_metrics.in[-c(1:2),], stringsAsFactors=FALSE)
+qc_metrics = apply(qc_metrics.in, 2, as.numeric)
+rownames(qc_metrics) = gsub('-', '.', rownames(qc_metrics.in))
 
 # extract information from sample names
 info = data.frame( Name = colnames(geneCounts), stringsAsFactors=FALSE)
@@ -119,9 +122,29 @@ info$CellType = factor(info$CellType,names(colorCodes))
 
 # add information about each sample
 info = merge(info, metadata1, by.x="DissectionID", by.y='Dissection.ID')
+info = merge(info, qc_metrics, by.x="Name", by.y='row.names')
 # info = merge(info, metadataCMC, by.x='Individual.ID', by.y="Individual ID")
 #  info[1:4, 1:20]
 
+
+df = melt(info[,c('DissectionID', 'CellType', colnames(qc_metrics)[1:10])], id.vars=c('DissectionID', 'CellType'))
+
+
+
+ggplot(df, aes( y=value)) + geom_boxplot() + facet_wrap(~variable) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) 
+
+
+
+```
+
+
+### summary
+```{r summary}
+table(info$Dx)
+ length(table(info$Individual.ID))
+```
+
+```{r preprocess}
 isexpr = rowSums(cpm(geneCounts)>1) >= 0.1*ncol(geneCounts)
 
 dge = DGEList( geneCounts[isexpr,] )
@@ -154,19 +177,23 @@ ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + th
 
 ### Differential expression
 ```{r dream}
-vobj = voomWithDreamWeights(dge, ~ (1|CellType) + (1|Individual.ID) + Gender, info, plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
+form = ~ (1|CellType) + (1|Individual.ID) + Gender
+form = ~ CellType
+vobj = voomWithDreamWeights(dge, form, info, plot=TRUE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
 
-fitBasic = dream( vobj, ~ CellType + (1|Individual.ID) + Gender.x, info, BPPARAM=SnowParam(6, progressbar=TRUE))
+fitBasic = dream( vobj, ~ CellType + (1|Individual.ID) + Gender, info, BPPARAM=SnowParam(6, progressbar=TRUE))
 
-fitDisease = dream( vobj, ~ CellType*Dx + (1|Individual.ID) + Gender.x, info, BPPARAM=SnowParam(6, progressbar=TRUE))
+fitDisease = dream( vobj, ~ CellType*Dx + (1|Individual.ID) + Gender, info, BPPARAM=SnowParam(6, progressbar=TRUE))
 ```
 
 
 ### variancePartition
 ```{r vp}
-vp = fitExtractVarPartModel( vobj, ~ (1|CellType) + (1|Dx) + (1|CellType:Dx)+ (1|Individual.ID) + (1|Gender), info, BPPARAM=SnowParam(6, progressbar=TRUE))
+form = ~ (1|CellType) + (1|Dx) + (1|CellType:Dx) + (1|Individual.ID) + (1|Gender)
+form = ~ CellType
+vp = fitExtractVarPartModel( vobj, form, info, BPPARAM=SnowParam(6, progressbar=TRUE))
 
-plotVarPart( vp )
+plotVarPart( sortCols(vp) )
 ```
 
 
