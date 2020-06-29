@@ -1,5 +1,5 @@
 ---
-title: "RNA-seq from 5 FANS populations"
+title: "RNA-seq from 4 cell populations"
 subtitle: ''
 author: "Developed by [Gabriel Hoffman](http://gabrielhoffman.github.io/)"
 date: "Run on `r Sys.time()`"
@@ -73,10 +73,16 @@ idx = grep("Undetermined", colnames(geneCounts))
 message("Dropping samples with improper names:\n",  paste(colnames(geneCounts)[idx], collapse="\n"))
 geneCounts = geneCounts[,-idx]
 
+idx = which(colSums(geneCounts) < 1e5)
+message("Dropping samples with zero read counts:\n",  paste(colnames(geneCounts)[idx], collapse="\n"))
+geneCounts = geneCounts[,-idx]
+
 # remove genes with duplicated EnsId
 exclude = duplicated(geneInfo$EnsId)
 geneInfo = geneInfo[!exclude,]
-geneInfo = geneCounts[!exclude,]
+geneCounts = geneCounts[!exclude,]
+rownames(geneCounts) = gsub("^(.*)(\\.\\S+)$", "\\1", geneInfo$Geneid)
+
 ```
 
 
@@ -92,27 +98,99 @@ metadataCMC = fread("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING
 
 ```{r QC}
 
+# extract information from sample names
 info = data.frame( Name = colnames(geneCounts), stringsAsFactors=FALSE)
+rownames(info) = info$Name
 info$DisectionID = sapply(strsplit( info$Name, '\\.'), function(x) x[1])
 info$CellType = sapply(strsplit( info$Name, '\\.'), function(x) x[2])
 info$Assay = sapply(strsplit( info$Name, '\\.'), function(x) x[3])
 
+# set color codes cor each cell type
+colorCodes = c(
+  GABA = '#66A61E',
+  GLU = '#E6AB02',
+  Olig = '#E7298A',
+  MgAs = '#7570B3')
 
-dge = DGEList( geneCounts )
-dge = calcNormFractors(dge)
+# set factor levels to be the same as the order of the colors
+# this makes plotting easier
+info$CellType = factor(info$CellType,names(colorCodes))
+
+isexpr = rowSums(cpm(geneCounts)>1) >= 0.1*ncol(geneCounts)
+
+dge = DGEList( geneCounts[isexpr,] )
+dge = calcNormFactors(dge)
 ```
 
+
+### PCA
 ```{r PCA}
 
+geneExpr = cpm(dge, log=TRUE)
+
+dcmp = prcomp( t(geneExpr), scale=TRUE)
+
+df_pca = data.frame(dcmp$x)
+
+df_pca = merge(df_pca, info, by.x="row.names", by.y="Name")
+
+varFrac = dcmp$sdev^2 / sum(dcmp$sdev^2)
 
 
+xlab = paste0('PC1 (', format(varFrac[1]*100, digits=3), '%)')
+ylab = paste0('PC2 (', format(varFrac[2]*100, digits=3), '%)')
+ggplot(df_pca, aes(PC1, PC2, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
+
+xlab = paste0('PC2 (', format(varFrac[2]*100, digits=3), '%)')
+ylab = paste0('PC3 (', format(varFrac[3]*100, digits=3), '%)')
+ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=, plot.title = element_text(hjust = 0.5) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
 
 ```      
 
 
+### Differential expression
+```{r dream}
+
+vobj = voomWithDreamWeights(dge, ~ CellType, info, plot=TRUE)
+
+fit = dream( vobj, ~ CellType, info)
+fit = eBayes(fit)
+```
+
+
+### variancePartition
+```{r vp}
+
+vp = fitExtractVarPartModel( vobj, ~ CellType, info)
+
+
+```
 
 
 
+
+```{r plot.DE.results}
+
+lapply( levels(info$CellType), function(CT){
+
+
+  ensID = rownames(topTable( fit, coef=paste0('CellType', CT), number=10))
+
+
+  df = merge( data.frame(Expression = geneExpr[ensID[1],]), info, by="row.names")
+
+  ggplot(df, aes(CellType, Expression, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5) + scale_color_manual("Cell Type", values=colorCodes) + ggtitle( ensID )
+
+
+
+
+  } )
+
+
+
+
+
+```
 
 
 
