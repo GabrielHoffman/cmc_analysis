@@ -13,14 +13,16 @@ output:
 
 <!---
 
-cd /hpc/users/hoffmg01/work/cmc_analysis
+cd /hpc/users/hoffmg01/work/cmc_analysis/src
 ml git pandoc
 git pull
 R
 
+rmarkdown::render("molec_profiling.Rmd", output_dir='./', intermediates_dir='./')
 
-rmarkdown::render("molec_profiling", output_dir='./', intermediates_dir='./')
 
+# http
+# https://hoffmg01.u.hpc.mssm.edu/molec_profiling.html
 
 --->
 
@@ -28,6 +30,8 @@ rmarkdown::render("molec_profiling", output_dir='./', intermediates_dir='./')
 ```{r load.packages, echo=FALSE, message=FALSE, results='hide'}
 suppressPackageStartupMessages({
 library(variancePartition)
+library(limma)
+library(edgeR)
 library(data.table)
 library(BiocParallel)
 library(ggplot2)
@@ -52,7 +56,6 @@ knitr::opts_chunk$set(
 options(markdown.HTML.stylesheet = 'css/custom.css')
 ```
 
-# read RNA-seq data
 ```{r read.data}
 file = "/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/rnaseq/step1-merged/featureCount/featureCount.gene.tsv.gz"
 df_featureCounts_gene = fread( file )
@@ -60,16 +63,19 @@ df_featureCounts_gene = fread( file )
 geneInfo = df_featureCounts_gene[,1:6]
 geneInfo$EnsId = gsub("^(.*)(\\.\\S+)$", "\\1", geneInfo$Geneid)
 
-counts = df_featureCounts_gene[,7:ncol(df_featureCounts_gene)]
-counts = as.data.frame(counts)
+geneCounts = df_featureCounts_gene[,7:ncol(df_featureCounts_gene)]
+geneCounts = as.data.frame(geneCounts)
 rownames(counts) = geneInfo$Geneid
+
+# identify samples with improper names
+idx = grep("Undetermined", colnames(geneCounts))
+message("Dropping samples with improper names:\n",  paste(colnames(geneCounts)[idx], collapse="\n"))
+geneCounts = geneCounts[,-idx]
 
 # remove genes with duplicated EnsId
 exclude = duplicated(geneInfo$EnsId)
 geneInfo = geneInfo[!exclude,]
-geneInfo = counts[!exclude,]
-
-
+geneInfo = geneCounts[!exclude,]
 ```
 
 
@@ -81,6 +87,38 @@ metadata1 = read.xlsx("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILI
 # form Synapse
 metadataCMC = fread("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/meta-files/CMC_METADATA.csv")
 ```
+
+
+```{r QC}
+
+info = data.frame( Name = colnames(geneCounts), stringsAsFactors=FALSE)
+info$DisectionID = sapply(strsplit( info$Name, '\\.'), function(x) x[1])
+info$CellType = sapply(strsplit( info$Name, '\\.'), function(x) x[2])
+info$Assay = sapply(strsplit( info$Name, '\\.'), function(x) x[3])
+
+
+dge = DGEList( geneCounts )
+dge = calcNormFractors(dge)
+```
+
+```{r PCA}
+
+
+
+
+```      
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
