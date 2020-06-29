@@ -136,14 +136,13 @@ df_pca = merge(df_pca, info, by.x="row.names", by.y="Name")
 
 varFrac = dcmp$sdev^2 / sum(dcmp$sdev^2)
 
-
 xlab = paste0('PC1 (', format(varFrac[1]*100, digits=3), '%)')
 ylab = paste0('PC2 (', format(varFrac[2]*100, digits=3), '%)')
-ggplot(df_pca, aes(PC1, PC2, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
+ggplot(df_pca, aes(PC1, PC2, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
 
 xlab = paste0('PC2 (', format(varFrac[2]*100, digits=3), '%)')
 ylab = paste0('PC3 (', format(varFrac[3]*100, digits=3), '%)')
-ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=, plot.title = element_text(hjust = 0.5) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
+ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
 
 ```      
 
@@ -160,10 +159,9 @@ fit = eBayes(fit)
 
 ### variancePartition
 ```{r vp}
-
 vp = fitExtractVarPartModel( vobj, ~ CellType, info)
 
-
+plotVarPart( vp )
 ```
 
 
