@@ -18,6 +18,7 @@ ml git pandoc
 git pull
 R
 
+system("git pull")
 rmarkdown::render("molec_profiling.Rmd", output_dir='./', intermediates_dir='./')
 
 
