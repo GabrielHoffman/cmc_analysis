@@ -1,0 +1,100 @@
+---
+title: "RNA-seq from 5 FANS populations"
+subtitle: ''
+author: "Developed by [Gabriel Hoffman](http://gabrielhoffman.github.io/)"
+date: "Run on `r Sys.time()`"
+documentclass: article
+output: 
+  html_document:
+  toc: true
+  smart: false
+---
+
+
+<!---
+
+cd /hpc/users/hoffmg01/work/cmc_analysis
+ml git pandoc
+git pull
+R
+
+
+rmarkdown::render("molec_profiling", output_dir='./', intermediates_dir='./')
+
+
+--->
+
+
+```{r load.packages, echo=FALSE, message=FALSE, results='hide'}
+suppressPackageStartupMessages({
+library(variancePartition)
+library(data.table)
+library(BiocParallel)
+library(ggplot2)
+library(gridExtra)
+library(openxlsx)
+})
+
+# set.seed(1)
+register(SnowParam(4))
+# register(SerialParam())
+
+knitr::opts_chunk$set(
+  echo=FALSE,
+  warning=FALSE,
+  message=FALSE,
+  error = FALSE,
+  tidy = FALSE,
+  cache = TRUE,
+  cache.lazy = FALSE,  dev = c("png", "pdf"), 
+  fig.width=7, fig.height=7)
+
+options(markdown.HTML.stylesheet = 'css/custom.css')
+```
+
+# read RNA-seq data
+```{r read.data}
+file = "/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/rnaseq/step1-merged/featureCount/featureCount.gene.tsv.gz"
+df_featureCounts_gene = fread( file )
+
+geneInfo = df_featureCounts_gene[,1:6]
+geneInfo$EnsId = gsub("^(.*)(\\.\\S+)$", "\\1", geneInfo$Geneid)
+
+counts = df_featureCounts_gene[,7:ncol(df_featureCounts_gene)]
+counts = as.data.frame(counts)
+rownames(counts) = geneInfo$Geneid
+
+# remove genes with duplicated EnsId
+exclude = duplicated(geneInfo$EnsId)
+geneInfo = geneInfo[!exclude,]
+geneInfo = counts[!exclude,]
+
+
+```
+
+
+```{r metadata}
+
+# focused on this experiment
+metadata1 = read.xlsx("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/meta-files/MolecularProfiling_MSSM_120samples_05.24.17-4.xlsx")
+
+# form Synapse
+metadataCMC = fread("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/meta-files/CMC_METADATA.csv")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
