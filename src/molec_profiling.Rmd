@@ -36,6 +36,7 @@ library(limma)
 library(edgeR)
 library(mvIC)
 library(reshape2)
+library(qvalue)
 library(data.table)
 library(BiocParallel)
 library(knitr)
@@ -187,6 +188,21 @@ ylab = paste0('PC3 (', format(varFrac[3]*100, digits=3), '%)')
 ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
 ```      
 
+### Sex check
+```{r sex.check}
+
+XIST = 'ENSG00000229807'
+UTY = 'ENSG00000183878'
+
+df = data.frame(  Name  = colnames(geneExpr), 
+                  XIST  = geneExpr[XIST,],
+                  UTY   = geneExpr[UTY,])
+df = merge( df, info[,c('Name', 'Gender')], by="Name" )
+df$Gender = factor(df$Gender, c("Male", 'Female'))
+
+ggplot(df, aes(XIST, UTY, color=Gender)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=c("blue", "red")) + ggtitle("Sex check")
+```
+
 ### Esimate precision weights
 ```{r voom}
 form = ~ (1|CellType) + (1|Individual.ID) + (1|Gender)
@@ -223,11 +239,26 @@ L = lapply( 1:ncol(index), function(j){
 })
 L = do.call(cbind, L)
 
-fitBasic = dream( vobj[1:40,], form, info, L=L, BPPARAM=SnowParam(6, progressbar=TRUE))
+fitBasic = dream( vobj, form, info, L=L, BPPARAM=SnowParam(6, progressbar=TRUE))
 ```
 
 
+Pairwise DE count, pairwise pi1
+```{r DE.analysis}
 
+index = combn(nlevels(info$CellType),2)
+
+df_de_Count = lapply( 1:ncol(index), function(j){
+
+    CT1 = levels(info$CellType)[index[1,j]]
+    CT2 = levels(info$CellType)[index[2,j]]
+
+    key = paste0(CT1, '.', CT2)
+
+    data.frame(key, count = sum(topTable(fitBasic, coef=key, number=Inf)$adj.P.Val < 0.05))
+})
+
+```
 
 
 
