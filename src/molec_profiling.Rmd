@@ -187,16 +187,11 @@ ylab = paste0('PC3 (', format(varFrac[3]*100, digits=3), '%)')
 ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
 ```      
 
-### Differential expression
-```{r dream}
+### Esimate precision weights
+```{r voom}
 form = ~ (1|CellType) + (1|Individual.ID) + (1|Gender)
 vobj = voomWithDreamWeights(dge, form, info, plot=TRUE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
-
-fitBasic = dream( vobj, ~ CellType + (1|Individual.ID) + (1|Gender), info, BPPARAM=SnowParam(6, progressbar=TRUE))
-
-fitDisease = dream( vobj, ~ CellType*Dx + (1|Individual.ID) + (1|Gender), info, BPPARAM=SnowParam(6, progressbar=TRUE))
 ```
-
 
 ### variancePartition
 ```{r vp}
@@ -204,6 +199,42 @@ form = ~ (1|CellType) + (1|Dx) + (1|CellType:Dx) + (1|Individual.ID) + (1|Gender
 vp = fitExtractVarPartModel( geneExpr, form, info, BPPARAM=SnowParam(6, progressbar=TRUE))
 
 plotVarPart( sortCols(vp) )
+```
+
+## Differential expression analysis
+### Cell type
+```{r DE_process}
+form = ~ 0 + CellType + (1|Individual.ID) + (1|Gender)
+
+# Prepare all pairwise contrasts
+index = combn(nlevels(info$CellType),2)
+
+L = lapply( 1:ncol(index), function(j){
+
+  CT1 = levels(info$CellType)[index[1,j]]
+  CT2 = levels(info$CellType)[index[2,j]]
+
+  L = getContrast( vobj, form, info, paste0('CellType', c(CT1, CT2)))
+
+  L = as.matrix(L)
+  colnames(L) = paste0(CT1, '.', CT2)
+
+  L
+})
+L = do.call(cbind, L)
+
+fitBasic = dream( vobj[1:40,], form, info, L=L, BPPARAM=SnowParam(6, progressbar=TRUE))
+```
+
+
+
+
+
+
+# Disease
+```{r DE.disease}
+# Disease
+fitDisease = dream( vobj, ~ 0 + CellType*Dx + (1|Individual.ID) + (1|Gender), info, BPPARAM=SnowParam(6, progressbar=TRUE))
 ```
 
 
@@ -220,14 +251,15 @@ df_RefPanel = lapply( colnames(fitCT), function(coef){
   # Extract mean for this cell type
   tabl = topTable(fitCT, coef=coef, number=Inf, sort.by='none')
 
-  df = data.frame(EnsID = rownames(tabl), tabl[,'AveExpr'])
-  colnames(df)[2] = gsub('CellType', '', coef)
+  df = data.frame(tabl[,'logFC'])
+  rownames(df) = rownames(tabl)
+  colnames(df) = gsub('CellType', '', coef)
   df
 
   })
 df_RefPanel = do.call(cbind, df_RefPanel)
 
-file = '/hpc/users/hoffmg01/work/cmc_analysis/src/MolProf_FANS_4_reference_panel.csv.gz'
+file = '/hpc/users/hoffmg01/work/cmc_analysis/src/Rousos_MSSM_MolProf_FANS_4_log2CPM_reference_panel.csv.gz'
 gz1 <- gzfile(file, "w")
 write.table(df_RefPanel, file, quote=FALSE, sep=",")
 close(gz1)
