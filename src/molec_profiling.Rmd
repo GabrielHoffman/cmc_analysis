@@ -38,7 +38,7 @@ library(mvIC)
 library(reshape2)
 library(data.table)
 library(BiocParallel)
-library(xtable)
+library(kable)
 library(ggplot2)
 library(gridExtra)
 library(openxlsx)
@@ -96,7 +96,7 @@ metadataCMC = fread("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING
 ```
 
 
-```{r QC}
+```{r QC, fig.width=12, fig.height=36}
 file = '/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/rnaseq/step1-merged/QCmetrics/qc_metrics.RDS'
 qc_metrics.in = t(readRDS( file ))
 colnames(qc_metrics.in) = qc_metrics.in[1,]
@@ -147,9 +147,9 @@ ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wr
 
 ### summary
 ```{r summary, results='asis'}
-xtable(table(info$Dx))
-xtable(table(info$Dx, info$CellType))
-xtable(table(info$Individual.ID))
+kable(table(info$Dx))
+kable(table(info$Dx, info$CellType))
+kable(table(info$Individual.ID))
 ```
 
 ```{r exit, cache=FALSE}
