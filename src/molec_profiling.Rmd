@@ -14,7 +14,7 @@ output:
 <!---
 
 cd /hpc/users/hoffmg01/work/cmc_analysis/src
-rm -rf molec_profiling_cache/
+# rm -rf molec_profiling_cache/
 ml git pandoc
 git pull
 R
