@@ -39,6 +39,7 @@ library(reshape2)
 library(data.table)
 library(BiocParallel)
 library(knitr)
+library(kableExtra)
 library(ggplot2)
 library(gridExtra)
 library(openxlsx)
@@ -147,15 +148,15 @@ ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wr
 
 ### summary
 ```{r summary, cache=FALSE}
-kable(table(info$Dx))
+kable(table(info$Dx)) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
 ```
 
 ```{r, cache=FALSE}
-kable(table(info$Dx, info$CellType))
+kable(table(info$Dx, info$CellType))  %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
 ```
 
 ```{r, cache=FALSE}
-kable(table(info$Individual.ID))
+kable(table(info$Individual.ID))  %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
 ```
 
 ```{r exit, cache=FALSE}
