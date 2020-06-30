@@ -215,10 +215,6 @@ plotVarPart( sortCols(vp) )
 
 
 
-```{r exit, cache=FALSE}
-knitr::knit_exit()
-```
-
 
 ```{r plot.DE.results}
 
