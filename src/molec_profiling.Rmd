@@ -146,15 +146,15 @@ ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wr
 
 
 ### summary
-```{r summary, results='asis'}
+```{r summary, cache=FALSE}
 kable(table(info$Dx))
 ```
 
-```{r}
+```{r, cache=FALSE}
 kable(table(info$Dx, info$CellType))
 ```
 
-```{r}
+```{r, cache=FALSE}
 kable(table(info$Individual.ID))
 ```
 
