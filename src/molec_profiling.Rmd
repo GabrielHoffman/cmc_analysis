@@ -88,11 +88,6 @@ rownames(geneCounts) = gsub("^(.*)(\\.\\S+)$", "\\1", rownames(geneCounts))
 ```
 
 
-```{r exit, cache=FALSE}
-knitr::knit_exit()
-```
-
-
 ```{r metadata}
 # focused on this experiment
 metadata1 = read.xlsx("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/meta-files/MolecularProfiling_MSSM_120samples_05.24.17-4.xlsx")
@@ -215,6 +210,11 @@ plotVarPart( sortCols(vp) )
 ```
 
 
+
+
+```{r exit, cache=FALSE}
+knitr::knit_exit()
+```
 
 
 
