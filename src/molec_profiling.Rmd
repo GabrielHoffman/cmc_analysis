@@ -68,7 +68,7 @@ geneInfo$EnsId = gsub("^(.*)(\\.\\S+)$", "\\1", geneInfo$Geneid)
 
 geneCounts = df_featureCounts_gene[,7:ncol(df_featureCounts_gene)]
 geneCounts = as.data.frame(geneCounts)
-rownames(geneCounts) = geneInfo$Geneid
+rownames(geneCounts) = geneInfo$Geneid 
 
 # identify samples with improper names
 idx = grep("Undetermined", colnames(geneCounts))
@@ -87,6 +87,11 @@ rownames(geneCounts) = gsub("^(.*)(\\.\\S+)$", "\\1", rownames(geneCounts))
 ```
 
 
+```{r exit, cache=FALSE}
+knitr::knit_exit()
+```
+
+
 ```{r metadata}
 # focused on this experiment
 metadata1 = read.xlsx("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/meta-files/MolecularProfiling_MSSM_120samples_05.24.17-4.xlsx")
@@ -95,7 +100,7 @@ metadata1 = read.xlsx("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILI
 metadataCMC = fread("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/meta-files/CMC_METADATA.csv")
 ```
 
-
+### RNA-seq QC metrics
 ```{r QC, fig.width=14, fig.height=36}
 file = '/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/rnaseq/step1-merged/QCmetrics/qc_metrics.RDS'
 qc_metrics.in = t(readRDS( file ))
@@ -145,10 +150,6 @@ ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wr
 ```
 
 
-
-```{r exit, cache=FALSE}
-knitr::knit_exit()
-```
 
 
 ### Study Summary
