@@ -135,13 +135,13 @@ info = info[match(colnames(geneCounts), info$Name),]
 
 
 # exclude columns with no variance
-exclude = apply(qc_metrics, 2, function(x) var(x, na.rm=TRUE)) == 0
+index = apply(qc_metrics, 2, function(x) var(x, na.rm=TRUE)) > 0
+include = which(index==TRUE)
 
-df = melt(info[,c('DissectionID', 'CellType', colnames(qc_metrics)[!exclude][1:30])], id.vars=c('DissectionID', 'CellType'))
+
+df = reshape2::melt(info[,c('DissectionID', 'CellType', colnames(qc_metrics)[include])], id.vars=c('DissectionID', 'CellType'))
 
 ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wrap(~variable, scales="free_y", ncol=6) + theme_bw(10) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_fill_manual("Cell Type", values=colorCodes) 
-
-
 ```
 
 
