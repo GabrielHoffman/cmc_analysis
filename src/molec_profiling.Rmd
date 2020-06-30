@@ -59,7 +59,7 @@ knitr::opts_chunk$set(
 options(markdown.HTML.stylesheet = 'css/custom.css')
 ```
 
-```{r read.data, messsage=TRUE}
+```{r read.data, messsage=FALSE}
 file = "/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/rnaseq/step1-merged/featureCount/featureCount.gene.tsv.gz"
 df_featureCounts_gene = fread( file )
 
