@@ -97,7 +97,7 @@ metadataCMC = fread("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING
 ```
 
 
-```{r QC, fig.width=12, fig.height=36}
+```{r QC, fig.width=14, fig.height=36}
 file = '/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/rnaseq/step1-merged/QCmetrics/qc_metrics.RDS'
 qc_metrics.in = t(readRDS( file ))
 colnames(qc_metrics.in) = qc_metrics.in[1,]
@@ -138,29 +138,21 @@ info = info[match(colnames(geneCounts), info$Name),]
 # exclude columns with no variance
 index = apply(qc_metrics, 2, function(x) var(x, na.rm=TRUE)) > 0
 include = which(index==TRUE)
-
+include = include[! names(include) %in% "PF_BASES"]
 
 df = reshape2::melt(info[,c('DissectionID', 'CellType', colnames(qc_metrics)[include])], id.vars=c('DissectionID', 'CellType'))
 
-ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wrap(~variable, scales="free_y", ncol=6) + theme_bw(10) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_fill_manual("Cell Type", values=colorCodes) 
+ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wrap(~variable, scales="free_y", ncol=6) + theme_bw(8) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_fill_manual("Cell Type", values=colorCodes) 
 ```
 
 
-### summary
-```{r summary, cache=FALSE}
-kable(table(info$Dx)) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
-```
-
+### Study Summary
 ```{r, cache=FALSE}
 kable(table(info$Dx, info$CellType))  %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
 ```
 
 ```{r, cache=FALSE}
 kable(table(info$Individual.ID))  %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
-```
-
-```{r exit, cache=FALSE}
-knitr::knit_exit()
 ```
 
 ```{r preprocess}
@@ -193,6 +185,11 @@ xlab = paste0('PC2 (', format(varFrac[2]*100, digits=3), '%)')
 ylab = paste0('PC3 (', format(varFrac[3]*100, digits=3), '%)')
 ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
 ```      
+
+
+```{r exit, cache=FALSE}
+knitr::knit_exit()
+```
 
 
 ### Differential expression
