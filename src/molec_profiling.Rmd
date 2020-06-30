@@ -59,7 +59,7 @@ knitr::opts_chunk$set(
 options(markdown.HTML.stylesheet = 'css/custom.css')
 ```
 
-```{r read.data}
+```{r read.data, messsage=TRUE}
 file = "/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/rnaseq/step1-merged/featureCount/featureCount.gene.tsv.gz"
 df_featureCounts_gene = fread( file )
 
@@ -84,8 +84,6 @@ exclude = duplicated(geneInfo$EnsId)
 geneInfo = geneInfo[!exclude,]
 geneCounts = geneCounts[!exclude,]
 rownames(geneCounts) = gsub("^(.*)(\\.\\S+)$", "\\1", rownames(geneCounts))
-
-
 ```
 
 
@@ -144,6 +142,12 @@ include = include[! names(include) %in% "PF_BASES"]
 df = reshape2::melt(info[,c('DissectionID', 'CellType', colnames(qc_metrics)[include])], id.vars=c('DissectionID', 'CellType'))
 
 ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wrap(~variable, scales="free_y", ncol=6) + theme_bw(8) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_fill_manual("Cell Type", values=colorCodes) 
+```
+
+
+
+```{r exit, cache=FALSE}
+knitr::knit_exit()
 ```
 
 
@@ -214,6 +218,7 @@ plotVarPart( sortCols(vp) )
 ```{r exit, cache=FALSE}
 knitr::knit_exit()
 ```
+
 
 ```{r plot.DE.results}
 
