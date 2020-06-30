@@ -271,7 +271,7 @@ ggplot(df_deCount, aes(CT1, CT2, fill=pi1)) + geom_tile() + theme_bw(15) + theme
 # Disease
 ```{r DE.disease}
 # Disease
-fitDisease = dream( vobj[1:4,], ~ 0 + CellType*Dx + (1|Individual.ID) + (1|Gender), info, BPPARAM=SnowParam(6, progressbar=TRUE))
+fitDisease = dream( vobj, ~ 0 + CellType*Dx + (1|Individual.ID) + (1|Gender), info, BPPARAM=SnowParam(6, progressbar=TRUE))
 ```
 
 ```{r Disease.analysis}
@@ -294,6 +294,7 @@ kable(df_disease)
 
 
 ### Save mean expression per cell type
+https://www.synapse.org/#!Synapse:syn22231629
 ```{r save.reference.panel}
 
 # compute mean for each cell type, using precision weights
