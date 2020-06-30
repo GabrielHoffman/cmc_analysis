@@ -148,11 +148,11 @@ ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wr
 
 
 ### Study Summary
-```{r, cache=FALSE}
+```{r}
 kable(table(info$Dx, info$CellType))  %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
 ```
 
-```{r, cache=FALSE}
+```{r}
 kable(table(info$Individual.ID))  %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
 ```
 
@@ -180,19 +180,13 @@ varFrac = dcmp$sdev^2 / sum(dcmp$sdev^2)
 
 xlab = paste0('PC1 (', format(varFrac[1]*100, digits=3), '%)')
 ylab = paste0('PC2 (', format(varFrac[2]*100, digits=3), '%)')
-fig1 = ggplot(df_pca, aes(PC1, PC2, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position='none') + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
+ggplot(df_pca, aes(PC1, PC2, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position='none') + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
 
 xlab = paste0('PC2 (', format(varFrac[2]*100, digits=3), '%)')
 ylab = paste0('PC3 (', format(varFrac[3]*100, digits=3), '%)')
-fig2 = ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
-
-plot_grid(fig1, fig2)
+ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
 ```      
 
-
-```{r exit, cache=FALSE}
-knitr::knit_exit()
-```
 
 
 ### Differential expression
@@ -216,6 +210,10 @@ plotVarPart( sortCols(vp) )
 
 
 
+
+```{r exit, cache=FALSE}
+knitr::knit_exit()
+```
 
 ```{r plot.DE.results}
 
