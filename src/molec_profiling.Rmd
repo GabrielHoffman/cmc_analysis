@@ -243,21 +243,27 @@ fitBasic = dream( vobj, form, info, L=L, BPPARAM=SnowParam(6, progressbar=TRUE))
 ```
 
 
-Pairwise DE count, pairwise pi1
 ```{r DE.analysis}
 
 index = combn(nlevels(info$CellType),2)
 
-df_de_Count = lapply( 1:ncol(index), function(j){
+df_deCount = lapply( 1:ncol(index), function(j){
 
     CT1 = levels(info$CellType)[index[1,j]]
     CT2 = levels(info$CellType)[index[2,j]]
 
     key = paste0(CT1, '.', CT2)
 
-    data.frame(key, count = sum(topTable(fitBasic, coef=key, number=Inf)$adj.P.Val < 0.05))
-})
+    tabl = topTable(fitBasic, coef=key, number=Inf)
 
+    data.frame(CT1, CT2, key, count = sum(tabl$adj.P.Val < 0.05), pi1 = 1 - qvalue(tabl$P.Value)$pi0)
+})
+df_deCount = do.call(rbind, df_deCount)
+
+ggplot(df_deCount, aes(CT1, CT2, fill=count)) + geom_tile() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + scale_fill_gradient(low="white", high="red", limits=c(0, 30000)) + geom_text(aes(label=format(count, big.mark=','))) + xlab('') + ylab('') + ggtitle("Count differentiall expression genes")
+
+
+ggplot(df_deCount, aes(CT1, CT2, fill=pi1)) + geom_tile() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + scale_fill_gradient(name = quote(pi[1]), low="white", high="red", limits=c(0, 1)) + geom_text(aes(label=format(pi1, digits=3))) + xlab('') + ylab('') + ggtitle(bquote(pi[1]))
 ```
 
 
@@ -265,9 +271,26 @@ df_de_Count = lapply( 1:ncol(index), function(j){
 # Disease
 ```{r DE.disease}
 # Disease
-fitDisease = dream( vobj, ~ 0 + CellType*Dx + (1|Individual.ID) + (1|Gender), info, BPPARAM=SnowParam(6, progressbar=TRUE))
+fitDisease = dream( vobj[1:4,], ~ 0 + CellType*Dx + (1|Individual.ID) + (1|Gender), info, BPPARAM=SnowParam(6, progressbar=TRUE))
 ```
 
+```{r Disease.analysis}
+df_disease = lapply(levels(info$CellType), function(CT){
+
+  key = paste0('CellType', CT, ':DxSCZ')
+
+  if( CT == levels(info$CellType)[1]){
+    key = 'DxSCZ'
+  } 
+
+  tabl = topTable( fitDisease, coef = key, number=Inf)
+
+  data.frame(CellType = CT, key, count = sum(tabl$adj.P.Val < 0.05), pi1 = 1 - qvalue(tabl$P.Value)$pi0)
+  })
+df_disease = do.call(rbind, df_disease)
+
+kable(df_disease)
+```
 
 
 ### Save mean expression per cell type
@@ -330,7 +353,9 @@ knitr::knit_exit()
 
 ```
 
-
+# TODO
+Genotype concordance
+Enrichments
 
 
 
