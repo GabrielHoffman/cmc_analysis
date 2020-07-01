@@ -142,7 +142,7 @@ include = include[! names(include) %in% "PF_BASES"]
 
 df = reshape2::melt(info[,c('DissectionID', 'CellType', colnames(qc_metrics)[include])], id.vars=c('DissectionID', 'CellType'))
 
-ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wrap(~variable, scales="free_y", ncol=6) + theme_bw(8) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_fill_manual("Cell Type", values=colorCodes) 
+ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wrap(~variable, scales="free_y", ncol=5) + theme_bw(10) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_fill_manual("Cell Type", values=colorCodes) 
 ```
 
 
@@ -167,7 +167,7 @@ dge = calcNormFactors(dge)
 
 
 ### PCA
-```{r PCA, fig.width=9}
+```{r PCA}
 
 geneExpr = cpm(dge, log=TRUE)
 
@@ -181,7 +181,7 @@ varFrac = dcmp$sdev^2 / sum(dcmp$sdev^2)
 
 xlab = paste0('PC1 (', format(varFrac[1]*100, digits=3), '%)')
 ylab = paste0('PC2 (', format(varFrac[2]*100, digits=3), '%)')
-ggplot(df_pca, aes(PC1, PC2, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position='none') + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
+ggplot(df_pca, aes(PC1, PC2, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
 
 xlab = paste0('PC2 (', format(varFrac[2]*100, digits=3), '%)')
 ylab = paste0('PC3 (', format(varFrac[3]*100, digits=3), '%)')
@@ -202,6 +202,13 @@ df$Gender = factor(df$Gender, c("Male", 'Female'))
 
 ggplot(df, aes(XIST, UTY, color=Gender)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=c("blue", "red")) + ggtitle("Sex check")
 ```
+
+Samples with wrong sex
+```{r sex.off}
+kable(df[df$Gender == 'Female' & df$UTY > 5,])
+```
+
+
 
 ### Esimate precision weights
 ```{r voom}
