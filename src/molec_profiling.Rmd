@@ -341,19 +341,20 @@ df_RefPanel = lapply( colnames(fitCT), function(coef){
 
   })
 df_RefPanel = do.call(cbind, df_RefPanel)
+df_RefPanel = data.frame(EnsID = rownames(df_RefPanel), df_RefPanel)
 
 exclude = grep("\\.se$", colnames(df_RefPanel))
 
 # write mean expression
 file = '/hpc/users/hoffmg01/work/cmc_analysis/src/Roussos_MSSM_MolProf_FANS_4_log2CPM_reference_panel.csv.gz'
 gz1 <- gzfile(file, "w")
-write.table(df_RefPanel[,-exclude], file, quote=FALSE, sep=",")
+write.table(df_RefPanel[,-exclude], gz1, quote=FALSE, sep=",", row.names=FALSE)
 close(gz1)
 
 # write standard error
 file = '/hpc/users/hoffmg01/work/cmc_analysis/src/Roussos_MSSM_MolProf_FANS_4_log2CPM_se_reference_panel.csv.gz'
 gz1 <- gzfile(file, "w")
-write.table(df_RefPanel[,exclude], file, quote=FALSE, sep=",")
+write.table(df_RefPanel[,c(1,exclude)], gz1, quote=FALSE, sep=",", row.names=FALSE)
 close(gz1)
 ```
 
