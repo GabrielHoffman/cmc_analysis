@@ -63,7 +63,7 @@ options(markdown.HTML.stylesheet = 'css/custom.css')
 
 ### Reading RNA-seq data
 ```{r read.data, message=TRUE}
-file = "/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/rnaseq/step1-merged/featureCount/featureCount.gene.tsv.gz"
+file = "/sc/arion/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/rnaseq/step1-merged/featureCount/featureCount.gene.tsv.gz"
 df_featureCounts_gene = fread( file )
 
 geneInfo = df_featureCounts_gene[,1:6]
@@ -97,15 +97,15 @@ geneInfo = merge(geneInfo, df_hugo, by.x='EnsId', by.y="ENSEMBL")
 
 ```{r metadata}
 # focused on this experiment
-metadata1 = read.xlsx("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/meta-files/MolecularProfiling_MSSM_120samples_05.24.17-4.xlsx")
+metadata1 = read.xlsx("/sc/arion/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/meta-files/MolecularProfiling_MSSM_120samples_05.24.17-4.xlsx")
 
 # form Synapse
-metadataCMC = fread("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/meta-files/CMC_METADATA.csv")
+metadataCMC = fread("/sc/arion/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/meta-files/CMC_METADATA.csv")
 ```
 
 ### RNA-seq QC metrics
 ```{r QC, fig.width=18, fig.height=74}
-file = '/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/rnaseq/step1-merged/QCmetrics/qc_metrics.RDS'
+file = '/sc/arion/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/rnaseq/step1-merged/QCmetrics/qc_metrics.RDS'
 qc_metrics.in = t(readRDS( file ))
 colnames(qc_metrics.in) = qc_metrics.in[1,]
 qc_metrics.in = as.data.frame(qc_metrics.in[-c(1:2),], stringsAsFactors=FALSE)
