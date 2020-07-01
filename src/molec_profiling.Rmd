@@ -166,7 +166,9 @@ dge = calcNormFactors(dge)
 ```
 
 ```{r TMM}
-hist(dge$samples$norm.factors, xlab = "TMM factor")
+df = merge(dge$samples, info, by="row.names")
+
+ggplot(df, aes(CellType, norm.factors, fill=CellType)) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) + ylab("TMM factor")
 ```
 
 ### PCA
