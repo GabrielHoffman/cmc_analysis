@@ -150,11 +150,11 @@ ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wr
 
 ### Study Summary
 ```{r}
-kable(table(info$Dx, info$CellType))  %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
+kable(table(info$Dx, info$CellType)) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
 ```
 
 ```{r}
-kable(table(info$Individual.ID))  %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
+kable(table(info$Individual.ID)) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
 ```
 
 ```{r preprocess}
@@ -205,7 +205,7 @@ ggplot(df, aes(XIST, UTY, color=Gender)) + geom_point() + theme_bw(15) + theme(a
 
 Samples with wrong sex
 ```{r sex.off}
-kable(df[df$Gender == 'Female' & df$UTY > 5,])
+kable(df[df$Gender == 'Female' & df$UTY > 5,], digits=2) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
 ```
 
 
