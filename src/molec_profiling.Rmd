@@ -289,10 +289,28 @@ df_deCount = do.call(rbind, df_deCount)
 
 ggplot(df_deCount, aes(CT1, CT2, fill=count)) + geom_tile() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + scale_fill_gradient(low="white", high="red", limits=c(0, 30000)) + geom_text(aes(label=format(count, big.mark=','))) + xlab('') + ylab('') + ggtitle("Count differentiall expression genes")
 
-
 ggplot(df_deCount, aes(CT1, CT2, fill=pi1)) + geom_tile() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + scale_fill_gradient(name = quote(pi[1]), low="white", high="red", limits=c(0, 1)) + geom_text(aes(label=format(pi1, digits=3))) + xlab('') + ylab('') + ggtitle(bquote(pi[1]))
 ```
 
+```{r DE2}
+
+index = combn(nlevels(info$CellType),2)
+
+df = lapply( 1:ncol(index), function(j){
+
+    CT1 = levels(info$CellType)[index[1,j]]
+    CT2 = levels(info$CellType)[index[2,j]]
+
+    key = paste0(CT1, '.', CT2)
+
+    tabl = topTable(fitBasic, coef=key, number=Inf)
+
+    data.frame(CT1, CT2, key, tabl)
+})
+df = do.call(rbind, df)
+
+ggplot(df, aes(logFC)) + geom_density(alpha = .2) + facet_wrap(~key) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) 
+```
 
 
 # Disease
@@ -318,6 +336,22 @@ df_disease = do.call(rbind, df_disease)
 
 kable(df_disease, digits=2, row.names=FALSE) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
 ```
+
+SOX6
+
+DE from null model
+Power vs sample size
+Paired versus non-paired
+Plot examples of marker genes
+distribution of effect size
+GTEX brain span.
+Compare cell types
+Homogeneity of variance for each cell type
+
+For next week: deconvolution of GTEx, PEC, CMC, BrainSpan, BrainVar
+
+
+
 
 
 ### Save mean expression per cell type
@@ -356,6 +390,9 @@ file = '/hpc/users/hoffmg01/work/cmc_analysis/src/Roussos_MSSM_MolProf_FANS_4_lo
 gz1 <- gzfile(file, "w")
 write.table(df_RefPanel[,c(1,exclude)], gz1, quote=FALSE, sep=",", row.names=FALSE)
 close(gz1)
+
+#  ml python/3.8.2
+# synapse add --parentid syn22231629 /hpc/users/hoffmg01/work/cmc_analysis/src/Roussos_MSSM_MolProf_FANS_4_log2CPM_reference_panel.csv.gz
 ```
 
 
