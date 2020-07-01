@@ -476,7 +476,7 @@ file_SubjectPhenotypesDS= "/sc/arion/projects/CommonMind/data/resources/GTEx/GTE
 file_counts = "/sc/arion/projects/CommonMind/data/resources/GTEx/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct.gz"
 
 gtex_sample = read.delim(file_SampleAttributesDS, header = TRUE, stringsAsFactors = FALSE)
-gtex_sample = gtex_sample[gtex_sample$SMTS == 'Brain',]
+# gtex_sample = gtex_sample[gtex_sample$SMTS == 'Brain',]
 
 rnaseq_sample_id = fread(file_counts, header = TRUE, skip = 2, nrows = 1)
 gtex_sample = gtex_sample[gtex_sample$SAMPID %in% colnames(rnaseq_sample_id),]
@@ -511,6 +511,14 @@ df_voomTrend_GTEx = do.call(rbind, df_voomTrend_GTEx)
 
 ggplot(df_voomTrend_GTEx, aes(x, y, color=key)) + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + ylab("sqrt( standard deviation)") + xlab("log2( count size + 0.5 )") + ggtitle("GTEx brain regions") + xlim(2, 22) + ylim(0.45, 1.36)
 ```
+
+```{r gtex.colors}
+# https://genome.ucsc.edu/cgi-bin/hgTables?db=hg19&hgta_track=hgFixed&hgta_group=allTables&hgta_table=hgFixed.gtexTissue
+
+gtexColors = read.table('/sc/arion/projects/CommonMind/data/resources/GTEx/TissueColors.tsv')
+
+```
+
 
 ```{r coef.variation}
 
