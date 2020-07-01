@@ -178,7 +178,7 @@ geneExpr = cpm(dge, log=TRUE)
 df = reshape2::melt(geneExpr)
 df = merge(df, info[,'CellType',drop=FALSE], by.x = "Var2", by.y="row.names")
 
-ggplot(df, aes(value, color=CellType, fill=Var2)) + geom_density()
+ggplot(df, aes(value, color=CellType, fill=Var2)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) 
 
 
 
