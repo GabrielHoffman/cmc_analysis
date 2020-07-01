@@ -98,7 +98,7 @@ metadataCMC = fread("/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING
 ```
 
 ### RNA-seq QC metrics
-```{r QC, fig.width=14, fig.height=36}
+```{r QC, fig.width=14, fig.height=50}
 file = '/sc/hydra/projects/CommonMind/roussp01a/MOLECULAR_PROFILING/rnaseq/step1-merged/QCmetrics/qc_metrics.RDS'
 qc_metrics.in = t(readRDS( file ))
 colnames(qc_metrics.in) = qc_metrics.in[1,]
