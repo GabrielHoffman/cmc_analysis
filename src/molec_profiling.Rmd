@@ -197,7 +197,7 @@ UTY = 'ENSG00000183878'
 df = data.frame(  Name  = colnames(geneExpr), 
                   XIST  = geneExpr[XIST,],
                   UTY   = geneExpr[UTY,])
-df = merge( df, info[,c('Name', 'Gender')], by="Name" )
+df = merge( df, info[,c('Name', 'Gender', 'Individual.ID')], by="Name" )
 df$Gender = factor(df$Gender, c("Male", 'Female'))
 
 ggplot(df, aes(XIST, UTY, color=Gender)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=c("blue", "red")) + ggtitle("Sex check")
