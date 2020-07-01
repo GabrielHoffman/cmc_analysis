@@ -142,7 +142,7 @@ include = include[! names(include) %in% "PF_BASES"]
 
 df = reshape2::melt(info[,c('DissectionID', 'CellType', colnames(qc_metrics)[include])], id.vars=c('DissectionID', 'CellType'))
 
-ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wrap(~variable, scales="free_y", ncol=5) + theme_bw(13) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_fill_manual("Cell Type", values=colorCodes) 
+ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wrap(~variable, scales="free_y", ncol=5) + theme_bw(16) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_fill_manual("Cell Type", values=colorCodes) 
 ```
 
 
@@ -205,7 +205,7 @@ ggplot(df, aes(XIST, UTY, color=Gender)) + geom_point() + theme_bw(15) + theme(a
 
 Samples with wrong sex
 ```{r sex.off}
-kable(df[df$Gender == 'Female' & df$UTY > 5,], digits=2, row.names=FALSE) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
+kable(df[df$Gender == 'Female' & df$UTY > 5,], digits=2, row.names=FALSE) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)  
 ```
 
 
