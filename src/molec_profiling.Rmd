@@ -318,6 +318,7 @@ df = do.call(rbind, df)
 ggplot(df, aes(logFC)) + geom_density(alpha = .2) + facet_wrap(~key) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) 
 ```
 
+## Plots of top differentially expressed genes
 ```{r DE.marker_genes, fig.width=15, fig.height=30}
 
 index = combn(nlevels(info$CellType),2)
@@ -370,7 +371,7 @@ tabList = lapply( 1:ncol(index), function(j){
   dge = calcNormFactors(dge)
 
   form = ~ CellType + Gender
-  vobj = voomWithDreamWeights(dge, form, infoSub, plot=TRUE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
+  vobj = voomWithDreamWeights(dge, form, infoSub, plot=FALSE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
 
   form = ~ CellType + Gender
   fit = dream( vobj, form, infoSub, BPPARAM=SnowParam(6, progressbar=TRUE))
@@ -421,7 +422,7 @@ tabList = lapply( 1:ncol(index), function(j){
   dge = calcNormFactors(dge)
 
   form = ~ CellType + Gender
-  vobj = voomWithDreamWeights(dge, form, infoSub, plot=TRUE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
+  vobj = voomWithDreamWeights(dge, form, infoSub, plot=FALSE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
 
   form = ~ CellType + Gender
   fit = dream( vobj, form, infoSub, BPPARAM=SnowParam(6, progressbar=TRUE))
@@ -435,6 +436,169 @@ df = do.call(rbind, tabList)
 
 ggplot(df, aes(logFC)) + geom_density(alpha = .2) + facet_wrap(~key) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) 
 ```
+
+
+```{r compare.voom}
+
+index = combn(nlevels(info$CellType),2)
+
+# for all pairs of cell types
+df_voomTrend = lapply( 1:ncol(index), function(j){
+
+  CT1 = levels(info$CellType)[index[1,j]]
+  CT2 = levels(info$CellType)[index[2,j]]
+  key = paste0(CT1, '.', CT2)
+
+  idx = which(info$CellType %in% c(CT1, CT2))
+
+  isexpr = rowSums(cpm(geneCounts[,idx])>1) >= 0.3*ncol(geneCounts[,idx])
+  table(isexpr)
+  infoSub = droplevels(info[idx,])
+
+  dge = DGEList( geneCounts[isexpr,idx] )
+  dge = calcNormFactors(dge)
+
+  form = ~ CellType + Gender
+  vobj = voomWithDreamWeights(dge, form, infoSub, plot=FALSE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
+
+  data.frame( key, x = vobj$voom.line[['x']], y = vobj$voom.line[['y']])
+})
+df_voomTrend = do.call(rbind, df_voomTrend)
+
+ggplot(df_voomTrend, aes(x, y, color=key)) + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + ylab("sqrt( standard deviation)") + xlab("log2( count size + 0.5 )") + xlim(0, 22) + ylim(0.4, 1.4)
+```
+
+### Compate to GTEx
+```{r GTEX.voom}
+
+file_SampleAttributesDS = "/sc/arion/projects/CommonMind/data/resources/GTEx/GTEx_Analysis_v8_Annotations_SampleAttributesDS.txt"
+file_SubjectPhenotypesDS= "/sc/arion/projects/CommonMind/data/resources/GTEx/GTEx_Analysis_v8_Annotations_SubjectPhenotypesDS.txt"
+file_counts = "/sc/arion/projects/CommonMind/data/resources/GTEx/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct.gz"
+
+gtex_sample = read.delim(file_SampleAttributesDS, header = TRUE, stringsAsFactors = FALSE)
+gtex_sample = gtex_sample[gtex_sample$SMTS == 'Brain',]
+
+rnaseq_sample_id = fread(file_counts, header = TRUE, skip = 2, nrows = 1)
+gtex_sample = gtex_sample[gtex_sample$SAMPID %in% colnames(rnaseq_sample_id),]
+
+# read count
+gtex_count <- fread(file_counts, header = TRUE, skip = 2, select = c('Description', unique(gtex_sample$SAMPID)))
+gtex_count = as.data.frame(gtex_count)
+gtex_count = gtex_count[!duplicated(gtex_count$Description), ]
+rownames(gtex_count) = gtex_count$Description
+gtex_count$Description = NULL
+
+isexpr = rowSums(cpm(gtex_count>1)) >= 0.3*ncol(gtex_count)
+dge = DGEList( gtex_count[isexpr,] )
+dge = calcNormFactors(dge)
+gtex_log2cpm = cpm(dge, log=TRUE)
+
+df_voomTrend_GTEx = lapply( unique(gtex_sample$SMTSD), function(Tissue){
+
+  idx = which( gtex_sample$SMTSD == Tissue)
+
+  isexpr = rowSums(cpm(gtex_count[,idx])>1) >= 0.3*ncol(gtex_count[,idx])
+  table(isexpr)
+
+  dge = DGEList( gtex_count[isexpr,idx] )
+  dge = calcNormFactors(dge)
+
+  vobj = voomWithDreamWeights(dge, ~1, gtex_sample[idx,], plot=FALSE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
+
+  data.frame( key = Tissue, x = vobj$voom.line[['x']], y = vobj$voom.line[['y']])
+})
+df_voomTrend_GTEx = do.call(rbind, df_voomTrend_GTEx)
+
+ggplot(df_voomTrend_GTEx, aes(x, y, color=key)) + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + ylab("sqrt( standard deviation)") + xlab("log2( count size + 0.5 )") + ggtitle("GTEx brain regions") + xlim(2, 22) + ylim(0.45, 1.36)
+```
+
+```{r coef.variation}
+
+# BCV for FANS4 data
+df_cv_FANS = lapply(levels(info$CellType), function(CT){
+   
+  id = info$Name[which(info$CellType == CT)]
+
+  isexpr = rowSums(cpm(geneCounts[,id])>1) >= 0.3*ncol(geneCounts[,id])
+
+  dge = DGEList(geneCounts[isexpr,id])
+  dge = calcNormFactors(dge)
+  d = estimateCommonDisp(dge)
+  d1 = estimateTrendedDisp(d)
+  d2 = estimateTagwiseDisp(d1)
+
+  data.frame( key = CT, Dataset = "FANS4", EnsID = rownames(dge), BCV = sqrt(getDispersion(d2)) )
+})
+df_cv_FANS = do.call(rbind, df_cv_FANS)
+
+# ggplot( df_cv_FANS, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) 
+
+
+# BCV for GTEX
+df_cv_GTEx = lapply( unique(gtex_sample$SMTSD)[c(36)], function(Tissue){
+
+  id = gtex_sample$SAMPID[which( gtex_sample$SMTSD == Tissue)][1:28]
+
+  isexpr = rowSums(cpm(gtex_count[,id])>1) >= 0.3*ncol(gtex_count[,id])
+
+  dge = DGEList(gtex_count[isexpr,id])
+  dge = calcNormFactors(dge)
+  d = estimateCommonDisp(dge)
+  d1 = estimateTrendedDisp(d)
+  d2 = estimateTagwiseDisp(d1)
+
+  data.frame( key = Tissue, Dataset = "GTEx", EnsID = rownames(dge), BCV = sqrt(getDispersion(d2)), stringsAsFactors=FALSE )
+})
+df_cv_GTEx = do.call(rbind, df_cv_GTEx)
+
+ggplot( df_cv_GTEx, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) 
+
+
+
+
+ggplot( rbind(df_cv_GTEx, df_cv_FANS), aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + facet_wrap(~Dataset)
+
+
+
+
+
+```{r cv.old}
+
+# cv = function(x){
+#   sd(x) / mean(x)
+# }
+
+
+# #   cv_est = apply(geneExpr[,id], 1, cv)
+
+# #   data.frame( key = CT, Gene = names(cv_est), CV = cv_est, stringsAsFactors=FALSE)
+# # })
+# # df_cv_FANS = do.call(rbind, df_cv_FANS)
+
+# # CV for GTEX
+# df_cv_GTEx = lapply( unique(gtex_sample$SMTSD), function(Tissue){
+
+#   id = gtex_sample$SAMPID[which( gtex_sample$SMTSD == Tissue)]
+
+#   cv_est = apply(gtex_log2cpm[,id], 1, cv)
+
+#   data.frame( key = Tissue, Gene = names(cv_est), CV = cv_est, stringsAsFactors=FALSE)
+# })
+# df_cv_GTEx = do.call(rbind, df_cv_GTEx)
+
+# df = rbind(df_cv_FANS, df_cv_GTEx)
+
+
+# ggplot( df_cv_FANS, aes(log10(CV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) + xlim(-2, 5) + ylim(0,1.4)
+
+# ggplot( df_cv_GTEx, aes(log10(CV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + xlim(-2, 5) + ylim(0,1.4)
+
+
+# ggplot( df, aes(log10(CV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + xlim(-2, 5) + ylim(0,1.4)
+
+```
+
+
 
 ## Differential expression with Increasing sample size
 ```{r subset.analysis}
@@ -541,7 +705,8 @@ df_disease = do.call(rbind, df_disease)
 kable(df_disease, digits=2, row.names=FALSE) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
 ```
 
-SOX6
+
+Volcano plot colored by cell type
 
 DE from null model
 Power vs sample size
