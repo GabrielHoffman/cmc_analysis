@@ -142,7 +142,7 @@ include = include[! names(include) %in% "PF_BASES"]
 
 df = reshape2::melt(info[,c('DissectionID', 'CellType', colnames(qc_metrics)[include])], id.vars=c('DissectionID', 'CellType'))
 
-ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wrap(~variable, scales="free_y", ncol=5) + theme_bw(10) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_fill_manual("Cell Type", values=colorCodes) 
+ggplot(df, aes( x=CellType, y=value, fill=CellType)) + geom_boxplot() + facet_wrap(~variable, scales="free_y", ncol=5) + theme_bw(13) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_fill_manual("Cell Type", values=colorCodes) 
 ```
 
 
