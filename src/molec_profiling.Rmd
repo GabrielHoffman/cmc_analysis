@@ -177,7 +177,7 @@ df = merge(dge$samples, info, by="row.names")
 ggplot(df, aes(CellType, norm.factors, fill=CellType)) + geom_boxplot() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) + ylab("TMM factor")
 ```
 
-```{r expression.density, fig.width=12, fig.height=12}
+```{r expression.density}
 
 geneExpr = cpm(dge, log=TRUE)
 
@@ -318,7 +318,7 @@ df = do.call(rbind, df)
 ggplot(df, aes(logFC)) + geom_density(alpha = .2) + facet_wrap(~key) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) 
 ```
 
-```{r DE.marker_genes}
+```{r DE.marker_genes, fig.width=12, fig.height=12}
 
 index = combn(nlevels(info$CellType),2)
 
