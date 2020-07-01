@@ -336,7 +336,7 @@ ensIDs = sapply( 1:ncol(index), function(j){
     c(head(rownames(tabl)), tail(rownames(tabl)))
 })
 
-ensIDs = unique(c(ensIDs))
+ensIDs = unique(c(ensIDs, 'ENSG00000110693', 'ENSG00000167281'))
 
 df = reshape2::melt(geneExpr[ensIDs,])
 df = merge(df, info[,1:3], by.x="Var2", by.y="row.names")
@@ -387,7 +387,7 @@ For next week: deconvolution of GTEx, PEC, CMC, BrainSpan, BrainVar
 
 
 
-
+bMIND can incorporate the prior of cell type variance/covariance. That is, the K x K covariance matrix for K cell types for each gene. I am wondering if Gabriel can also share this info, if sharing the sample-level data is not possible.
 
 ### Save mean expression per cell type
 https://www.synapse.org/#!Synapse:syn22231629
