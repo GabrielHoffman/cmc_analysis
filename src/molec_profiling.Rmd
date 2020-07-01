@@ -165,6 +165,9 @@ dge = DGEList( geneCounts[isexpr,] )
 dge = calcNormFactors(dge)
 ```
 
+```{r TMM}
+hist(dge$samples$norm.factors, xlab = "TMM factor")
+```
 
 ### PCA
 ```{r PCA}
@@ -312,18 +315,28 @@ df_RefPanel = lapply( colnames(fitCT), function(coef){
 
   # Extract mean for this cell type
   tabl = topTable(fitCT, coef=coef, number=Inf, sort.by='none')
+  tabl$se = tabl$logFC / tabl$t # compute standard error given beta and t
 
-  df = data.frame(tabl[,'logFC'])
+  df = data.frame(tabl[,c('logFC', 'se')])
   rownames(df) = rownames(tabl)
-  colnames(df) = gsub('CellType', '', coef)
+  colnames(df) = paste0(gsub('CellType', '', coef), c('', '.se'))
   df
 
   })
 df_RefPanel = do.call(cbind, df_RefPanel)
 
-file = '/hpc/users/hoffmg01/work/cmc_analysis/src/Rousos_MSSM_MolProf_FANS_4_log2CPM_reference_panel.csv.gz'
+exclude = grep("\\.se$", colnames(df_RefPanel))
+
+# write mean expression
+file = '/hpc/users/hoffmg01/work/cmc_analysis/src/Roussos_MSSM_MolProf_FANS_4_log2CPM_reference_panel.csv.gz'
 gz1 <- gzfile(file, "w")
-write.table(df_RefPanel, file, quote=FALSE, sep=",")
+write.table(df_RefPanel[,-exclude], file, quote=FALSE, sep=",")
+close(gz1)
+
+# write standard error
+file = '/hpc/users/hoffmg01/work/cmc_analysis/src/Roussos_MSSM_MolProf_FANS_4_log2CPM_se_reference_panel.csv.gz'
+gz1 <- gzfile(file, "w")
+write.table(df_RefPanel[,exclude], file, quote=FALSE, sep=",")
 close(gz1)
 ```
 
