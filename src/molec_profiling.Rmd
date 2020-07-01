@@ -400,7 +400,43 @@ df_de_summary = do.call(rbind, df_de_summary)
 kable(df_de_summary) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
 ```
 
-## Increasing sample size
+```{r pairwise.density}
+
+index = combn(nlevels(info$CellType),2)
+
+# for all pairs of cell types
+tabList = lapply( 1:ncol(index), function(j){
+
+  CT1 = levels(info$CellType)[index[1,j]]
+  CT2 = levels(info$CellType)[index[2,j]]
+  key = paste0(CT1, '.', CT2)
+
+  idx = which(info$CellType %in% c(CT1, CT2))
+
+  isexpr = rowSums(cpm(geneCounts[,idx])>1) >= 0.3*ncol(geneCounts[,idx])
+  table(isexpr)
+  infoSub = droplevels(info[idx,])
+
+  dge = DGEList( geneCounts[isexpr,idx] )
+  dge = calcNormFactors(dge)
+
+  form = ~ CellType + Gender
+  vobj = voomWithDreamWeights(dge, form, infoSub, plot=TRUE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
+
+  form = ~ CellType + Gender
+  fit = dream( vobj, form, infoSub, BPPARAM=SnowParam(6, progressbar=TRUE))
+  fit = eBayes(fit)
+
+  coef = paste0('CellType',levels(infoSub$CellType)[2])
+
+  data.frame(key, topTable(fit, coef=coef, number=Inf))
+})
+df = do.call(rbind, tabList)
+
+ggplot(df, aes(logFC)) + geom_density(alpha = .2) + facet_wrap(~key) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) 
+```
+
+## Differential expression with Increasing sample size
 ```{r subset.analysis}
 
 n_array =  c(3, 5, 10, 20, 28)
@@ -421,16 +457,16 @@ tabRampList = lapply( sampleRamp, function(sampleSet){
   geneCountSub = geneCounts[,infoSub$Name]
 
   # for all pairs of cell types
-  lapply( 1:ncol(index), function(j){
+  tabList = lapply( 1:ncol(index), function(j){
 
     CT1 = levels(infoSub$CellType)[index[1,j]]
     CT2 = levels(infoSub$CellType)[index[2,j]]
     key = paste0(CT1, '.', CT2)
 
+    idx = which(infoSub$CellType %in% c(CT1, CT2))
+
     message(key, " ", nrow(sampleSet) )
     infoSub2 = droplevels(infoSub[idx,])
-
-    idx = which(infoSub$CellType %in% c(CT1, CT2))
 
     isexpr = rowSums(cpm(geneCountSub[,idx])>1) >= 0.3*ncol(geneCountSub[,idx])
     table(isexpr)
@@ -438,10 +474,10 @@ tabRampList = lapply( sampleRamp, function(sampleSet){
     dge = DGEList( geneCountSub[isexpr,idx] )
     dge = calcNormFactors(dge)
 
-    form = ~ CellType + Gender
-    vobj = voomWithDreamWeights(dge, form, infoSub2, plot=TRUE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE), quiet=TRUE)
+    form = ~ CellType
+    vobj = voomWithDreamWeights(dge, form, infoSub2, plot=FALSE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE), quiet=TRUE)
 
-    form = ~ CellType + Gender
+    form = ~ CellType
     fit = dream( vobj, form, infoSub2, BPPARAM=SnowParam(6, progressbar=TRUE), quiet=TRUE)
     fit = eBayes(fit)
 
@@ -449,10 +485,37 @@ tabRampList = lapply( sampleRamp, function(sampleSet){
 
     topTable(fit, coef=coef, number=Inf)
   })
+  names(tabList) = apply(matrix(levels(infoSub$CellType)[index], nrow=2), 2, function(x) paste0(x, collapse='.'))
+  tabList  
 })
-
-
 ```
+
+```{r subset.analysis.plots}
+
+df_de_summary = lapply( 1:length(tabRampList), function(j){
+
+  tabList = tabRampList[[j]]
+
+  df_de_summary = lapply( names(tabList), function(key){
+    tab = data.table(tabList[[key]])
+
+    df_de_summary = data.frame( Comparison  = key, 
+                N           = n_array[j],
+                nGenes      = nrow(tab), 
+                nDE         = sum(tab$adj.P.Val < 0.05),
+                nDE_gt_1    =  nrow(tab[adj.P.Val < 0.05 & abs(logFC) > 1,]), 
+                nDE_gt_2    =  nrow(tab[adj.P.Val < 0.05 & abs(logFC) > 2,]), 
+                nDE_gt_3    =  nrow(tab[adj.P.Val < 0.05 & abs(logFC) > 3,]), 
+                nDE_gt_4    =  nrow(tab[adj.P.Val < 0.05 & abs(logFC) > 4,]), 
+                pi1         = 1-qvalue(tab$P.Value)$pi0)
+    })
+   do.call(rbind, df_de_summary)
+})
+df_de_summary = do.call(rbind, df_de_summary)
+
+ggplot(df_de_summary, aes(N, nDE_gt_1, color=Comparison)) + geom_point() + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position = "none") + ylab("# DE and |logFC| > 1") + xlab("Sample size") + ylim(0,NA)
+```
+
 
 # Disease
 ```{r DE.disease}
