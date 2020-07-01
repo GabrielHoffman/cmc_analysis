@@ -40,6 +40,7 @@ library(qvalue)
 library(data.table)
 library(BiocParallel)
 library(knitr)
+library(org.Hs.eg.db)
 library(kableExtra)
 library(ggplot2)
 library(cowplot)
@@ -86,6 +87,11 @@ exclude = duplicated(geneInfo$EnsId)
 geneInfo = geneInfo[!exclude,]
 geneCounts = geneCounts[!exclude,]
 rownames(geneCounts) = gsub("^(.*)(\\.\\S+)$", "\\1", rownames(geneCounts))
+
+# convert to HUGO names
+df_hugo = select(org.Hs.eg.db, geneInfo$EnsId, "SYMBOL", "ENSEMBL")
+geneInfo = merge(geneInfo, df_hugo, by.x='EnsId', by.y="ENSEMBL")
+
 ```
 
 
@@ -310,6 +316,35 @@ df = lapply( 1:ncol(index), function(j){
 df = do.call(rbind, df)
 
 ggplot(df, aes(logFC)) + geom_density(alpha = .2) + facet_wrap(~key) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) 
+```
+
+```{r DE.marker_genes}
+
+index = combn(nlevels(info$CellType),2)
+
+ensIDs = sapply( 1:ncol(index), function(j){
+
+    CT1 = levels(info$CellType)[index[1,j]]
+    CT2 = levels(info$CellType)[index[2,j]]
+
+    key = paste0(CT1, '.', CT2)
+
+    tabl = topTable(fitBasic, coef=key, number=Inf)
+
+    tabl = tabl[order(tabl$t),]
+
+    c(head(rownames(tabl)), tail(rownames(tabl)))
+})
+
+ensIDs = unique(c(ensIDs))
+
+df = reshape2::melt(geneExpr[ensIDs,])
+df = merge(df, info[,1:3], by.x="Var2", by.y="row.names")
+
+df_hugo = select(org.Hs.eg.db, unique(as.character(df$Var1)), "SYMBOL", "ENSEMBL")
+df = merge(df, df_hugo, by.x="Var1", by.y="ENSEMBL")
+
+ggplot(df, aes(CellType, value, fill=CellType)) + geom_boxplot() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position = "none") + scale_fill_manual("Cell Type", values=colorCodes) + facet_wrap(~SYMBOL) + ylab(bquote(log[2]~CPM))
 ```
 
 
