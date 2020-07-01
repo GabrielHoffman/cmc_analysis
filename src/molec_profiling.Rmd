@@ -348,6 +348,111 @@ df = df[!is.na(df$SYMBOL),]
 ggplot(df, aes(CellType, value, fill=CellType)) + geom_boxplot() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position = "none") + scale_fill_manual("Cell Type", values=colorCodes) + facet_wrap(~SYMBOL, ncol=5) + ylab(bquote(log[2]~CPM))
 ```
 
+## Analysis using just pairs of samples
+```{r pairwise.analysis}
+
+index = combn(nlevels(info$CellType),2)
+
+# for all pairs of cell types
+tabList = lapply( 1:ncol(index), function(j){
+
+  CT1 = levels(info$CellType)[index[1,j]]
+  CT2 = levels(info$CellType)[index[2,j]]
+  key = paste0(CT1, '.', CT2)
+
+  idx = which(info$CellType %in% c(CT1, CT2))
+
+  isexpr = rowSums(cpm(geneCounts[,idx])>1) >= 0.3*ncol(geneCounts[,idx])
+  table(isexpr)
+  infoSub = droplevels(info[idx,])
+
+  dge = DGEList( geneCounts[isexpr,idx] )
+  dge = calcNormFactors(dge)
+
+  form = ~ CellType + Gender
+  vobj = voomWithDreamWeights(dge, form, infoSub, plot=TRUE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
+
+  form = ~ CellType + Gender
+  fit = dream( vobj, form, infoSub, BPPARAM=SnowParam(6, progressbar=TRUE))
+  fit = eBayes(fit)
+
+  coef = paste0('CellType',levels(infoSub$CellType)[2])
+
+  topTable(fit, coef=coef, number=Inf)
+})
+
+names(tabList) = apply(matrix(levels(info$CellType)[index], nrow=2), 2, function(x) paste0(x, collapse='.'))
+
+df_de_summary = lapply( names(tabList), function(key){
+  tab = data.table(tabList[[key]])
+
+  data.frame( Comparison  = key, 
+              nGenes      = nrow(tab), 
+              nDE         = sum(tab$adj.P.Val < 0.05),
+              nDE_gt_1    =  nrow(tab[adj.P.Val < 0.05 & abs(logFC) > 1,]), 
+              nDE_gt_2    =  nrow(tab[adj.P.Val < 0.05 & abs(logFC) > 2,]), 
+              nDE_gt_3    =  nrow(tab[adj.P.Val < 0.05 & abs(logFC) > 3,]), 
+              nDE_gt_4    =  nrow(tab[adj.P.Val < 0.05 & abs(logFC) > 4,]), 
+              pi1         = 1-qvalue(tab$P.Value)$pi0)
+  })
+df_de_summary = do.call(rbind, df_de_summary)
+
+kable(df_de_summary) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
+```
+
+## Increasing sample size
+```{r subset.analysis}
+
+n_array =  c(3, 5, 10, 20, 28)
+sampleRamp = lapply(n_array, function(N){
+
+  df = sapply(levels(info$CellType), function(CT){
+    info$Name[which(info$CellType == CT)[1:N]]
+    })
+  data.frame(df, stringsAsFactors=FALSE)
+  })
+
+
+index = combn(nlevels(info$CellType),2)
+
+tabRampList = lapply( sampleRamp, function(sampleSet){
+
+  infoSub = droplevels(info[info$Name %in% unlist(sampleSet),])
+  geneCountSub = geneCounts[,infoSub$Name]
+
+  # for all pairs of cell types
+  lapply( 1:ncol(index), function(j){
+
+    CT1 = levels(infoSub$CellType)[index[1,j]]
+    CT2 = levels(infoSub$CellType)[index[2,j]]
+    key = paste0(CT1, '.', CT2)
+
+    message(key, " ", nrow(sampleSet) )
+    infoSub2 = droplevels(infoSub[idx,])
+
+    idx = which(infoSub$CellType %in% c(CT1, CT2))
+
+    isexpr = rowSums(cpm(geneCountSub[,idx])>1) >= 0.3*ncol(geneCountSub[,idx])
+    table(isexpr)
+
+    dge = DGEList( geneCountSub[isexpr,idx] )
+    dge = calcNormFactors(dge)
+
+    form = ~ CellType + Gender
+    vobj = voomWithDreamWeights(dge, form, infoSub2, plot=TRUE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE), quiet=TRUE)
+
+    form = ~ CellType + Gender
+    fit = dream( vobj, form, infoSub2, BPPARAM=SnowParam(6, progressbar=TRUE), quiet=TRUE)
+    fit = eBayes(fit)
+
+    coef = paste0('CellType',levels(infoSub2$CellType)[2])
+
+    topTable(fit, coef=coef, number=Inf)
+  })
+})
+
+
+```
 
 # Disease
 ```{r DE.disease}
