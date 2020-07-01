@@ -343,6 +343,7 @@ df = merge(df, info[,1:3], by.x="Var2", by.y="row.names")
 
 df_hugo = select(org.Hs.eg.db, unique(as.character(df$Var1)), "SYMBOL", "ENSEMBL")
 df = merge(df, df_hugo, by.x="Var1", by.y="ENSEMBL")
+df = df[!is.na(df$SYMBOL),]
 
 ggplot(df, aes(CellType, value, fill=CellType)) + geom_boxplot() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position = "none") + scale_fill_manual("Cell Type", values=colorCodes) + facet_wrap(~SYMBOL, ncol=5) + ylab(bquote(log[2]~CPM))
 ```
