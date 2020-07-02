@@ -561,7 +561,7 @@ df_cv_GTEx = do.call(rbind, df_cv_GTEx)
 ggplot( df_cv_GTEx, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) 
 
 # use colors here
-gtexColors and colorCodes
+# gtexColors and colorCodes
 
 
 ggplot( rbind(df_cv_GTEx, df_cv_FANS), aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + facet_wrap(~Dataset)
