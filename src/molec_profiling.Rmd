@@ -561,7 +561,7 @@ df_cv_GTEx = do.call(rbind, df_cv_GTEx)
 # ggplot( df_cv_GTEx, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) 
 ```
 
-```{r plot.coef.variation, fig.width=12}
+```{r plot.coef.variation, fig.width=12, fig.height=12}
 # use colors here
 # gtexColors and colorCodes
 
@@ -575,7 +575,7 @@ names(cols) = gtexColors$description[i[!is.na(i)]]
 
 cols = c(cols, colorCodes)[levels(df$key)]
 
-ggplot( df, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + facet_wrap(~Dataset, ncol=1) + scale_color_manual("Type", values=cols) 
+ggplot( df, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="below") + facet_wrap(~Dataset, ncol=1) + scale_color_manual("Type", values=cols) 
 ```
 
 
