@@ -542,9 +542,9 @@ df_cv_FANS = do.call(rbind, df_cv_FANS)
 
 
 # BCV for GTEX
-df_cv_GTEx = lapply( unique(gtex_sample$SMTSD)[c(36)], function(Tissue){
+df_cv_GTEx = lapply( unique(gtex_sample$SMTSD), function(Tissue){
 
-  id = gtex_sample$SAMPID[which( gtex_sample$SMTSD == Tissue)][1:28]
+  id = gtex_sample$SAMPID[which( gtex_sample$SMTSD == Tissue)]
 
   isexpr = rowSums(cpm(gtex_count[,id])>1) >= 0.3*ncol(gtex_count[,id])
 
@@ -558,15 +558,25 @@ df_cv_GTEx = lapply( unique(gtex_sample$SMTSD)[c(36)], function(Tissue){
 })
 df_cv_GTEx = do.call(rbind, df_cv_GTEx)
 
-ggplot( df_cv_GTEx, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) 
+# ggplot( df_cv_GTEx, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) 
+```
 
+```{r plot.coef.variation, fig.width=12}
 # use colors here
 # gtexColors and colorCodes
 
+df = rbind(df_cv_GTEx, df_cv_FANS)
+df$key = factor(df$key)
 
-ggplot( rbind(df_cv_GTEx, df_cv_FANS), aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + facet_wrap(~Dataset)
+i = match(levels(df$key), gtexColors$description)
+cols = as.hexmode(gtexColors$color)[i[!is.na(i)]]
+cols = paste0('#', cols)
+names(cols) = gtexColors$description[i[!is.na(i)]]
 
+cols = c(cols, colorCodes)[levels(df$key)]
 
+ggplot( df, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + facet_wrap(~Dataset, ncol=1) + scale_color_manual("Type", values=cols) 
+```
 
 
 
