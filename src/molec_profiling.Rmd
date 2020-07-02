@@ -621,6 +621,7 @@ ggplot( df, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(a
 ```
 
 ### PCA including GTEx
+Computed on residuals
 ```{r PCA.gtex}
 
 id = gtex_sample$SAMPID[which( gtex_sample$SMTSD == 'Brain - Frontal Cortex (BA9)')]
@@ -638,8 +639,6 @@ geneExprCombined = cpm(dge, log=TRUE)
 infoExpand = rbind(data.frame(info[,c(1,3)], dataset="FANS4", stringsAsFactors=FALSE), 
   data.frame(Name=colnames(gtex_count[,id]), CellType = "GTEx BA9", dataset="GTEx", stringsAsFactors=FALSE))
 rownames(infoExpand) = infoExpand$Name
-
-infoExpand$CellType
 
 # the first PC separates FANS from bulk, so subtract that and use residuals
 fit = dream(geneExprCombined, ~ dataset, infoExpand)
@@ -664,6 +663,7 @@ ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + th
 ```
 
 ### MDS
+# computed on log cpm
 ```{r GTEX.MDS}
 d = as.dist(1 - cor(geneExprCombined)^2)
 
