@@ -245,16 +245,18 @@ vobj = voomWithDreamWeights(dge, form, info, plot=TRUE, save.plot=TRUE, BPPARAM=
 ### mvIC
 ```{r mvIC}
 colnames(info) = gsub(' ', '_', colnames(info))
+colnames(info) = gsub(':', '', colnames(info))
+colnames(info) = gsub('\\(', '', colnames(info))
+colnames(info) = gsub(')', '', colnames(info))
+colnames(info) = gsub('/', '', colnames(info))
+colnames(info) = gsub('-', '_', colnames(info))
+colnames(info) = gsub(',', '', colnames(info))
 
 include = apply(info, 2, function(x) all(!is.na(x)) && var(x, na.rm=TRUE) >0 )
 
 variables = colnames(info)[colnames(info) %in% names(include[include])]
 
-mvSearch = mvForwardStepwise( vobj[1:10,], ~ CellType, info, variables)
-
-
-
-
+mvSearch = mvForwardStepwise( vobj, ~ CellType, info, variables)
 ```
 
 
