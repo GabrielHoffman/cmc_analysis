@@ -622,6 +622,7 @@ ggplot( df, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(a
 
 ### PCA including GTEx
 Computed on residuals
+
 ```{r PCA.gtex}
 
 id = gtex_sample$SAMPID[which( gtex_sample$SMTSD == 'Brain - Frontal Cortex (BA9)')]
@@ -663,7 +664,8 @@ ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + th
 ```
 
 ### MDS
-# computed on log cpm
+computed on log cpm
+
 ```{r GTEX.MDS}
 
 d = as.dist(1 - cor(geneExprCombined)^2)
@@ -673,7 +675,7 @@ df_mds = data.frame(cmdscale( d, k=3))
 
 df_mds = merge(df_mds, infoExpand, by.x="row.names", by.y="Name")
 
-# ggplot(df_mds, aes(X1, X2, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=c(colorCodes, "grey")) + xlab('Coordinate 1') + ylab('Coordinate 2')
+ggplot(df_mds, aes(X1, X2, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=c(colorCodes, "grey")) + xlab('Coordinate 1') + ylab('Coordinate 2')
 
 ggplot(df_mds, aes(X2, X3, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=c(colorCodes, "grey")) + xlab('Coordinate 2') + ylab('Coordinate 3')
 ```
