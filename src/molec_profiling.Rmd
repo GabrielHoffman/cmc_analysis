@@ -242,6 +242,22 @@ form = ~ (1|CellType) + (1|Individual.ID) + (1|Gender)
 vobj = voomWithDreamWeights(dge, form, info, plot=TRUE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
 ```
 
+### mvIC
+```{r mvIC}
+colnames(info) = gsub(' ', '_', colnames(info))
+
+include = apply(info, 2, function(x) all(!is.na(x)) && var(x, na.rm=TRUE) >0 )
+
+variables = colnames(info)[colnames(info) %in% names(include[include])]
+
+mvSearch = mvForwardStepwise( vobj[1:10,], ~ CellType, info, variables)
+
+
+
+
+```
+
+
 ### variancePartition
 ```{r vp}
 form = ~ (1|CellType) + (1|Dx) + (1|CellType:Dx) + (1|Individual.ID) + (1|Gender)
