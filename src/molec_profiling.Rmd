@@ -635,11 +635,17 @@ dge = calcNormFactors(dge)
 
 geneExprCombined = cpm(dge, log=TRUE)
 
-infoExpand = rbind(info[,c(1,3)], 
-  data.frame(Name=colnames(gtex_count[,id]), CellType = "BA9", stringsAsFactors=FALSE))
+infoExpand = rbind(data.frame(info[,c(1,3)], dataset="FANS4", stringsAsFactors=FALSE), 
+  data.frame(Name=colnames(gtex_count[,id]), CellType = "GTEx BA9", dataset="GTEx", stringsAsFactors=FALSE))
 rownames(infoExpand) = infoExpand$Name
 
-dcmp = prcomp( t(geneExprCombined), scale=TRUE)
+infoExpand$CellType
+
+# the first PC separates FANS from bulk, so subtract that and use residuals
+fit = dream(geneExprCombined, ~ dataset, infoExpand)
+resid = residuals(fit, geneExprCombined)
+
+dcmp = prcomp( t(resid), scale=TRUE)
 
 df_pca = data.frame(dcmp$x)
 
@@ -659,14 +665,15 @@ ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + th
 
 ### MDS
 ```{r GTEX.MDS}
-
 d = as.dist(1 - cor(geneExprCombined)^2)
 
-df_mds = data.frame(cmdscale( d, k=2))
+df_mds = data.frame(cmdscale( d, k=3))
 
 df_mds = merge(df_mds, infoExpand, by.x="row.names", by.y="Name")
 
 ggplot(df_mds, aes(X1, X2, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=c(colorCodes, "grey")) + xlab('Coordinate 1') + ylab('Coordinate 2')
+
+ggplot(df_mds, aes(X2, X3, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=c(colorCodes, "grey")) + xlab('Coordinate 2') + ylab('Coordinate 3')
 ```
 
 ## Differential expression with Increasing sample size
