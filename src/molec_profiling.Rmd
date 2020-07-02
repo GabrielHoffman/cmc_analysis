@@ -508,8 +508,10 @@ df_voomTrend_GTEx = lapply( unique(gtex_sample$SMTSD), function(Tissue){
   data.frame( key = Tissue, x = vobj$voom.line[['x']], y = vobj$voom.line[['y']])
 })
 df_voomTrend_GTEx = do.call(rbind, df_voomTrend_GTEx)
+```
 
-ggplot(df_voomTrend_GTEx, aes(x, y, color=key)) + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + ylab("sqrt( standard deviation)") + xlab("log2( count size + 0.5 )") + ggtitle("GTEx brain regions") + xlim(2, 22) + ylim(0.45, 1.36)
+```{r GTEX.voom.plot}
+ggplot(df_voomTrend_GTEx, aes(x, y, color=key)) + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="below") + ylab("sqrt( standard deviation)") + xlab("log2( count size + 0.5 )") + ggtitle("GTEx brain regions") + xlim(2, 22) + ylim(0.45, 1.36)
 ```
 
 ```{r gtex.colors}
