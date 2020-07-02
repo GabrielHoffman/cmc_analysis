@@ -623,18 +623,27 @@ ggplot( df, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(a
 ### PCA including GTEx
 ```{r PCA.gtex}
 
-# need to use ENSEMBL genes for GTEx
+id = gtex_sample$SAMPID[which( gtex_sample$SMTSD == 'Brain - Frontal Cortex (BA9)')]
+countsCombined = merge(geneCounts, gtex_count[,id], by="row.names")
+rownames(countsCombined) = countsCombined$Row.names
+countsCombined$Row.names = NULL
 
-countsCombined
+isexpr = rowSums(cpm(countsCombined)>1) >= 0.3*ncol(countsCombined)
 
+dge = DGEList(countsCombined[isexpr,])
+dge = calcNormFactors(dge)
 
-geneExpr = cpm(dge, log=TRUE)
+geneExprCombined = cpm(dge, log=TRUE)
 
-dcmp = prcomp( t(geneExpr), scale=TRUE)
+infoExpand = rbind(info[,c(1,3)], 
+  data.frame(Name=colnames(gtex_count[,id]), CellType = "BA9", stringsAsFactors=FALSE))
+rownames(infoExpand) = infoExpand$Name
+
+dcmp = prcomp( t(geneExprCombined), scale=TRUE)
 
 df_pca = data.frame(dcmp$x)
 
-df_pca = merge(df_pca, info, by.x="row.names", by.y="Name")
+df_pca = merge(df_pca, infoExpand, by.x="row.names", by.y="Name")
 
 varFrac = dcmp$sdev^2 / sum(dcmp$sdev^2)
 
@@ -645,7 +654,6 @@ ggplot(df_pca, aes(PC1, PC2, color=CellType)) + geom_point() + theme_bw(15) + th
 xlab = paste0('PC2 (', format(varFrac[2]*100, digits=3), '%)')
 ylab = paste0('PC3 (', format(varFrac[3]*100, digits=3), '%)')
 ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) + xlab(xlab) + ylab(ylab)
-
 
 ```
 
