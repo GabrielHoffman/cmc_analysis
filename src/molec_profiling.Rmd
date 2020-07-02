@@ -657,7 +657,17 @@ ggplot(df_pca, aes(PC2, PC3, color=CellType)) + geom_point() + theme_bw(15) + th
 
 ```
 
+### MDS
+```{r GTEX.MDS}
 
+d = as.dist(1 - cor(geneExprCombined)^2)
+
+df_mds = data.frame(cmdscale( d, k=2))
+
+df_mds = merge(df_mds, infoExpand, by.x="row.names", by.y="Name")
+
+ggplot(df_mds, aes(X1, X2, color=CellType)) + geom_point() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=c(colorCodes, "grey")) + xlab('Coordinate 1') + ylab('Coordinate 2')
+```
 
 ## Differential expression with Increasing sample size
 ```{r subset.analysis}
