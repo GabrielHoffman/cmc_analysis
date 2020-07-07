@@ -766,7 +766,7 @@ ggplot( df_melt, aes(key, value, fill=key)) + geom_bar(stat='identity') + theme_
 
 ```
 
-```{r plot.coef.variation, fig.width=12, fig.height=12}
+```{r plot.coef.variation, fig.width=12, fig.height=12, eval=FALSE}
 # use colors here
 # gtexColors and colorCodes
 
