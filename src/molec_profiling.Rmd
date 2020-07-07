@@ -44,6 +44,8 @@ library(org.Hs.eg.db)
 library(kableExtra)
 library(ggplot2)
 library(cowplot)
+library(scran)
+library(SummarizedExperiment)
 library(gridExtra)
 library(openxlsx)
 library(EnsDb.Hsapiens.v86)
@@ -515,25 +517,25 @@ dge = DGEList( gtex_count[isexpr,] )
 dge = calcNormFactors(dge)
 gtex_log2cpm = cpm(dge, log=TRUE)
 
-df_voomTrend_GTEx = lapply( unique(gtex_sample$SMTSD), function(Tissue){
+# df_voomTrend_GTEx = lapply( unique(gtex_sample$SMTSD), function(Tissue){
 
-  idx = which( gtex_sample$SMTSD == Tissue)
+#   idx = which( gtex_sample$SMTSD == Tissue)
 
-  isexpr = rowSums(cpm(gtex_count[,idx])>1) >= 0.3*ncol(gtex_count[,idx])
-  table(isexpr)
+#   isexpr = rowSums(cpm(gtex_count[,idx])>1) >= 0.3*ncol(gtex_count[,idx])
+#   table(isexpr)
 
-  dge = DGEList( gtex_count[isexpr,idx] )
-  dge = calcNormFactors(dge)
+#   dge = DGEList( gtex_count[isexpr,idx] )
+#   dge = calcNormFactors(dge)
 
-  vobj = voomWithDreamWeights(dge, ~1, gtex_sample[idx,], plot=FALSE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
+#   vobj = voomWithDreamWeights(dge, ~1, gtex_sample[idx,], plot=FALSE, save.plot=TRUE, BPPARAM=SnowParam(6, progressbar=TRUE))
 
-  data.frame( key = Tissue, x = vobj$voom.line[['x']], y = vobj$voom.line[['y']])
-})
-df_voomTrend_GTEx = do.call(rbind, df_voomTrend_GTEx)
+#   data.frame( key = Tissue, x = vobj$voom.line[['x']], y = vobj$voom.line[['y']])
+# })
+# df_voomTrend_GTEx = do.call(rbind, df_voomTrend_GTEx)
 ```
 
 ```{r GTEX.voom.plot}
-ggplot(df_voomTrend_GTEx, aes(x, y, color=key)) + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="bottom") + ylab("sqrt( standard deviation)") + xlab("log2( count size + 0.5 )") + ggtitle("GTEx brain regions") + xlim(2, 22) + ylim(0.45, 1.36)
+# ggplot(df_voomTrend_GTEx, aes(x, y, color=key)) + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="bottom") + ylab("sqrt( standard deviation)") + xlab("log2( count size + 0.5 )") + ggtitle("GTEx brain regions") + xlim(2, 22) + ylim(0.45, 1.36)
 ```
 
 ```{r gtex.colors}
@@ -543,7 +545,7 @@ gtexColors = read.csv('/sc/arion/projects/CommonMind/data/resources/GTEx/GTEx_Ti
 ```
 
 
-```{r CV.all.in.one}
+```{r CV.all.in.one, eval=FALSE}
 
 # FANS4
 isexpr = rowSums(edgeR::cpm(geneCounts)>1) >= 0.3*ncol(geneCounts)
@@ -596,10 +598,6 @@ ggplot(df_combined, aes(log2(mean), log2(trend), color=key, size=dataset)) + geo
 
 
 ```{r coef.variation}
-# BiocManager::install("scran")
-library(scran)
-library(DESeq2)
-library(ggpubr)
 
 CTarray = as.list(levels(info$CellType))
 CTarray[[5]] = c("GABA", "GLU")
