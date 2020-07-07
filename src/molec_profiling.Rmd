@@ -48,6 +48,7 @@ library(cowplot)
 library(SummarizedExperiment)
 library(gridExtra)
 library(openxlsx)
+detach("package:EnsDb.Hsapiens.v86", unload=TRUE)
 library(EnsDb.Hsapiens.v86)
 ensdb = EnsDb.Hsapiens.v86
 })
@@ -64,6 +65,8 @@ knitr::opts_chunk$set(
 
 options(markdown.HTML.stylesheet = 'css/custom.css')
 ```
+
+
 
 ### Reading RNA-seq data
 ```{r read.data, message=TRUE}
@@ -247,6 +250,8 @@ vobj = voomWithDreamWeights(dge, form, info, plot=TRUE, save.plot=TRUE, BPPARAM=
 ```
 
 ### mvIC
+Need to get proper covariates here
+
 ```{r mvIC}
 colnames(info) = gsub(' ', '_', colnames(info))
 colnames(info) = gsub(':', '', colnames(info))
@@ -337,7 +342,7 @@ df = lapply( 1:ncol(index), function(j){
 })
 df = do.call(rbind, df)
 
-ggplot(df, aes(logFC)) + geom_density(alpha = .2) + facet_wrap(~key) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) 
+ggplot(df, aes(logFC, ..count..)) + geom_density(alpha = .2) + facet_wrap(~key) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) 
 ```
 
 ## Plots of top differentially expressed genes
@@ -356,7 +361,7 @@ ensIDs = sapply( 1:ncol(index), function(j){
 
     tabl = tabl[order(tabl$t),]
 
-    c(head(rownames(tabl)), tail(rownames(tabl)))
+    c(head(rownames(tabl), 10), tail(rownames(tabl), 10))
 })
 
 ensIDs = unique(c(ensIDs, 'ENSG00000110693', 'ENSG00000167281'))
@@ -966,14 +971,24 @@ tabRampList = lapply( sampleRamp, function(sampleSet){
 })
 ```
 
-```{r subset.analysis.plots}
+
+Just counting coding genes, but analysis was for everything
+
+```{r subset.analysis.plots, fig.width=9}
 
 df_de_summary = lapply( 1:length(tabRampList), function(j){
 
   tabList = tabRampList[[j]]
 
   df_de_summary = lapply( names(tabList), function(key){
-    tab = data.table(tabList[[key]])
+    tab = tabList[[key]]
+
+    geneTab = select(ensdb, keys=rownames(tab), columns=c("GENEID", "GENEBIOTYPE"), keytype="GENEID")
+
+    tab = merge(tab, geneTab, by.x="row.names", by.y="GENEID")
+
+    tab = data.table(tab)
+    tab = tab[GENEBIOTYPE=='protein_coding',]
 
     df_de_summary = data.frame( Comparison  = key, 
                 N           = n_array[j],
@@ -989,7 +1004,7 @@ df_de_summary = lapply( 1:length(tabRampList), function(j){
 })
 df_de_summary = do.call(rbind, df_de_summary)
 
-ggplot(df_de_summary, aes(N, nDE_gt_1, color=Comparison)) + geom_point() + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position = "none") + ylab("# DE and |logFC| > 1") + xlab("Sample size") + ylim(0,NA)
+ggplot(df_de_summary, aes(N, nDE_gt_1, color=Comparison)) + geom_point() + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position = "right") + ylab("# DE and |logFC| > 1") + xlab("Sample size") + ylim(0,NA)
 ```
 
 
