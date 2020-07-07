@@ -48,6 +48,7 @@ library(cowplot)
 library(SummarizedExperiment)
 library(gridExtra)
 library(openxlsx)
+library(EnsDb.Hsapiens.v86)
 detach("package:EnsDb.Hsapiens.v86", unload=TRUE)
 library(EnsDb.Hsapiens.v86)
 ensdb = EnsDb.Hsapiens.v86
