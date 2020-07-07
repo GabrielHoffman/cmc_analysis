@@ -46,6 +46,8 @@ library(ggplot2)
 library(cowplot)
 library(gridExtra)
 library(openxlsx)
+library(EnsDb.Hsapiens.v86)
+ensdb = EnsDb.Hsapiens.v86
 })
 
 knitr::opts_chunk$set(
@@ -541,46 +543,228 @@ gtexColors = read.csv('/sc/arion/projects/CommonMind/data/resources/GTEx/GTEx_Ti
 ```
 
 
+```{r CV.all.in.one}
+
+# FANS4
+isexpr = rowSums(edgeR::cpm(geneCounts)>1) >= 0.3*ncol(geneCounts)
+
+se <- SummarizedExperiment( assays=list(counts = geneCounts[isexpr,]), colData = info)
+res = modelGeneCV2( se, block=info$CellType )
+fit = metadata(res)
+
+df_fans4 = lapply( names(res$per.block), function(key){
+  with( res$per.block[[key]], data.frame(key, mean, total, trend, ratio, FDR))
+  })
+df_fans4 = data.table(do.call(rbind, df_fans4))
+
+
+df_fans4 = df_fans4[order(df_fans4$mean),]
+ggplot(df_fans4, aes(log2(mean), log2(trend), color=key)) + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + xlab(bquote(log[2]~Mean~expression)) + ylab(bquote(log[2]~CV~trend)) + scale_color_manual(values=colorCodes)+ xlim(0, 20) + ylim(-5, 5)
+
+
+# GTEX
+idx = which(gtex_sample$SMTSD %in% names(which(table(gtex_sample$SMTSD) > 30)))
+
+isexpr = rowSums(edgeR::cpm(gtex_count[,idx])>1) >= 0.3*ncol(gtex_count[,idx])
+
+se <- SummarizedExperiment( assays=list(counts = gtex_count[isexpr,idx]), colData = gtex_sample[idx,])
+res = modelGeneCV2( se, block=gtex_sample$SMTSD[idx] )
+
+df_gtex = lapply( names(res$per.block), function(key){
+  with( res$per.block[[key]], data.frame(key, mean, total, trend, ratio, FDR))
+  })
+df_gtex = data.table(do.call(rbind, df_gtex))
+df_gtex$key = factor(df_gtex$key)
+
+i = match(levels(df_gtex$key), gtexColors$description)
+colsGTEx = as.hexmode(gtexColors$color)[i[!is.na(i)]]
+
+
+df_gtex = df_gtex[order(df_gtex$mean),]
+df_gtex = df_gtex[df_gtex$mean > 0,]
+
+ggplot(df_gtex, aes(log2(mean), log2(trend), color=key)) + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + xlab(bquote(log[2]~Mean~expression)) + ylab(bquote(log[2]~CV~trend))+ scale_color_manual(values=colsGTEx) + xlim(0, 20) + ylim(-5, 5)
+
+
+df_gtex$dataset = 'GTEx'
+df_fans4$dataset = "FANS4"
+df_combined = rbind(df_gtex, df_fans4)
+
+
+ggplot(df_combined, aes(log2(mean), log2(trend), color=key, size=dataset)) + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + xlab(bquote(log[2]~Mean~expression)) + ylab(bquote(log[2]~CV~trend)) + scale_size_manual(values=c(2, .1)) + scale_color_manual(values=c(rep("black", length(colsGTEx)), colorCodes)) + xlim(-8, 20) + ylim(-5, 3) 
+```
+
+
 ```{r coef.variation}
+# BiocManager::install("scran")
+library(scran)
+library(DESeq2)
+library(ggpubr)
 
-# BCV for FANS4 data
-df_cv_FANS = lapply(levels(info$CellType), function(CT){
+CTarray = as.list(levels(info$CellType))
+CTarray[[5]] = c("GABA", "GLU")
+CTarray[[6]] = levels(info$CellType)
+
+# different because only genes expressed in given cell type are used
+res_cv_FANS = lapply(CTarray, function(CT){
    
-  id = info$Name[which(info$CellType == CT)]
+  id = info$Name[which(info$CellType %in% CT)]
 
-  isexpr = rowSums(cpm(geneCounts[,id])>1) >= 0.3*ncol(geneCounts[,id])
+  isexpr = rowSums(edgeR::cpm(geneCounts[,id])>1) >= 0.1*ncol(geneCounts[,id])
 
-  dge = DGEList(geneCounts[isexpr,id])
-  dge = calcNormFactors(dge)
-  d = estimateCommonDisp(dge)
-  d1 = estimateTrendedDisp(d)
-  d2 = estimateTagwiseDisp(d1)
+  se <- SummarizedExperiment( assays=list(counts = geneCounts[isexpr,id]), colData = info[id,])
+  res = modelGeneCV2( se ) # returns CV^2
+  fit = metadata(res)
 
-  data.frame( key = CT, Dataset = "FANS4", EnsID = rownames(dge), BCV = sqrt(getDispersion(d2)) )
+  geneTab = select(ensdb, keys=names(isexpr[isexpr]), columns=c("GENEID", "GENEBIOTYPE"), keytype="GENEID")
+  
+  list(df = data.frame( key = paste0(CT, collapse="."), res ),
+       f = fit$trend,
+       nExpressed = sum(isexpr),
+       nExpressed.CDS = sum(geneTab$GENEBIOTYPE == 'protein_coding'))
 })
+
+x = 2^seq(-3, 15, length.out=500)
+df_trend_FANS = lapply(res_cv_FANS, function(res){ 
+  data.frame( Dataset="FANS4", key = res$df$key[1], mean = x, trend=res$f(x))
+  })
+df_trend_FANS = do.call(rbind, df_trend_FANS)
+
+df_cv_FANS = lapply(res_cv_FANS, function(res){ 
+  res$df
+  })
 df_cv_FANS = do.call(rbind, df_cv_FANS)
 
-# ggplot( df_cv_FANS, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + scale_color_manual("Cell Type", values=colorCodes) 
+
+colorCodes['GABA.GLU'] = "orange"
+colorCodes['GABA.GLU.Olig.MgAs'] = "dodgerblue"
+
+# Take sqrt(CV^2)
+ggplot(df_trend_FANS, aes(log2(mean), log2(sqrt(trend)), color=key, size=Dataset)) + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position=c(.7, .9)) + xlab(bquote(log[2]~Mean~expression)) + ylab(bquote(log[2]~CV~trend)) + scale_size_manual(values=c(2, .1)) + scale_color_manual(values=colorCodes) + scale_x_continuous(expand=c(0.01, 0))
 
 
-# BCV for GTEX
-df_cv_GTEx = lapply( unique(gtex_sample$SMTSD), function(Tissue){
+ggplot(df_cv_FANS[df_cv_FANS$key %in% names(colorCodes)[1:4],], aes(log2(sqrt(total)), color=key)) + geom_density(size=2) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="right")  + scale_color_manual(values=colorCodes) + xlab(bquote(log[2]~CV))
+
+
+
+ggplot(df_cv_FANS, aes(log2(sqrt(total)), color=key)) + geom_density(size=2) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="right")  + scale_color_manual(values=colorCodes) + xlab(bquote(log[2]~CV))
+
+
+#  GTEX
+res_cv_GTEx = lapply( names(which(table(gtex_sample$SMTSD) > 30)), function(Tissue){
 
   id = gtex_sample$SAMPID[which( gtex_sample$SMTSD == Tissue)]
 
-  isexpr = rowSums(cpm(gtex_count[,id])>1) >= 0.3*ncol(gtex_count[,id])
+  isexpr = rowSums(edgeR::cpm(gtex_count[,id])>1) >= 0.1*ncol(gtex_count[,id])
 
-  dge = DGEList(gtex_count[isexpr,id])
-  dge = calcNormFactors(dge)
-  d = estimateCommonDisp(dge)
-  d1 = estimateTrendedDisp(d)
-  d2 = estimateTagwiseDisp(d1)
+  se <- SummarizedExperiment( assays=list(counts = gtex_count[isexpr,id]), colData = gtex_sample[id,])
+  res = modelGeneCV2( se )
+  fit = metadata(res)
 
-  data.frame( key = Tissue, Dataset = "GTEx", EnsID = rownames(dge), BCV = sqrt(getDispersion(d2)), stringsAsFactors=FALSE )
+  geneTab = select(ensdb, keys=names(isexpr[isexpr]), columns=c("GENEID", "GENEBIOTYPE"), keytype="GENEID")  
+
+  list(df = data.frame( key = Tissue, res ),
+       f = fit$trend,
+       nExpressed = sum(isexpr),
+       nExpressed.CDS = sum(geneTab$GENEBIOTYPE == 'protein_coding'))
 })
-df_cv_GTEx = do.call(rbind, df_cv_GTEx)
 
-# ggplot( df_cv_GTEx, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) 
+df_trend_GTEx = lapply(res_cv_GTEx, function(res){ 
+  data.frame( Dataset="GTEx", key = res$df$key[1], mean = x, trend=res$f(x))
+  })
+df_trend_GTEx = do.call(rbind, df_trend_GTEx)
+df_trend_GTEx$key = factor(df_trend_GTEx$key)
+
+df_cv_GTEx = lapply(res_cv_GTEx, function(res){ 
+  res$df
+  })
+df_cv_GTEx = do.call(rbind, df_cv_GTEx)
+df_cv_GTEx$key = factor(df_cv_GTEx$key)
+
+
+i = match(levels(df_trend_GTEx$key), gtexColors$description)
+colsGTEx = as.hexmode(gtexColors$color)[i[!is.na(i)]]
+
+ggplot(df_trend_GTEx, aes(log2(mean), log2(sqrt(trend)), color=key)) + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + xlab(bquote(log[2]~Mean~expression)) + ylab(bquote(log[2]~CV~trend)) + scale_color_manual(values=colsGTEx) + scale_x_continuous(expand=c(.01,0))
+
+
+ggplot(df_cv_GTEx, aes(log2(sqrt(total)), color=key)) + geom_density(size=2) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + xlab(bquote(log[2]~CV~trend)) + scale_color_manual(values=colsGTEx)
+
+
+
+# combine
+df_combined = rbind(df_trend_GTEx, df_trend_FANS)
+
+ggplot(df_combined, aes(log2(mean), log2(trend), color=key, size=Dataset)) + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + xlab(bquote(log[2]~Mean~expression)) + ylab(bquote(log[2]~CV~trend)) + scale_size_manual(values=c(2, .2)) + scale_color_manual(values=c(rep("grey60", length(colsGTEx)), colorCodes)) + scale_x_continuous(expand=c(.01,0))
+
+
+df_cv_GTEx$Dataset = "GTEx"
+df_cv_GTEx$Type = "Real"
+df_cv_FANS$Dataset = "FANS4"
+df_cv_FANS$Type = "Real"
+df_cv_FANS$Type[df_cv_FANS$key %in% names(colorCodes)[5:6]] = "Synthetic"
+
+df = data.table(rbind(df_cv_GTEx, df_cv_FANS))
+
+ggplot(df, aes(log2(total), color=key, size=Dataset, linetype=Type)) + geom_density(size=2) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + xlab(bquote(log[2]~CV~trend)) + scale_color_manual(values=c(rep("grey", length(colsGTEx)), colorCodes)) + scale_size_manual(values=c(2, .2)) + scale_linetype_discrete(c("solid", "dashed"))
+
+# number of expressed genes
+ df[,sum(total > 0), by='key']
+
+
+df2 = lapply(sort(unique(df$key)), function(KEY){
+  data.frame(key = KEY, Dataset = df$Dataset[df$key == KEY][1],
+    Type = df$Type[df$key == KEY][1],
+    CV2=df[key==KEY,][order(mean,decreasing=TRUE)[1:15000],]$total)
+  })
+df2 = data.table(do.call(rbind, df2))
+df2$key = factor(df2$key, (sort(unique(df2$key))))
+levels(df2$key)
+
+i = match(levels(df2$key), gtexColors$description)
+colsGTEx = paste0("#", as.hexmode(gtexColors$color)[i[!is.na(i)]])
+names(colsGTEx) = gtexColors$description[i[!is.na(i)]]
+
+cols = c(colsGTEx, colorCodes)[levels(df2$key)]
+cols[names(colsGTEx)] = "grey"
+
+ggplot(df2, aes(log2(sqrt(CV2)), color=key, size=Dataset, linetype=Type)) + geom_density(size=2) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + xlab(bquote(log[2]~CV~trend)) + scale_color_manual(values=cols) + scale_size_manual(values=c(2, .1)) + scale_linetype_discrete(c("solid", "dashed"))
+
+
+df3 = df2[,median(sqrt(CV)), by='key']
+
+ggplot( df3, aes(key, V1, fill=key)) + geom_bar(stat='identity') + theme_bw(10) + theme(aspect.ratio=5, plot.title = element_text(hjust = 0.5), legend.position="none")  + scale_fill_manual(values=c(colsGTEx, colorCodes)[levels(df3$key)]) + coord_flip() + ylab(bquote(Median~CV)) + scale_y_continuous(expand=c(0,0)) + xlab('') + ylim(0, max(df3$V1)*1.05)
+
+
+# Compare to IPS and LCL
+
+# genes expressed
+
+df_count_fans4 = lapply(res_cv_FANS, function(res){  
+  data.frame( Dataset="FANS4", key = res$df$key[1], 
+    "Expressed genes"=res$nExpressed, "Expressed coding genes"=res$nExpressed.CDS)
+ })
+df_count_fans4 = do.call(rbind, df_count_fans4) 
+
+df_count_gtex = lapply(res_cv_GTEx, function(res){  
+  data.frame( Dataset="GTEx", key = res$df$key[1], 
+    "Expressed genes"=res$nExpressed, "Expressed coding genes"=res$nExpressed.CDS)
+ })
+df_count_gtex = do.call(rbind, df_count_gtex) 
+
+df_count = rbind(df_count_gtex, df_count_fans4)
+df_count$key = factor(df_count$key, rev(levels(df2$key)))
+
+
+i = match(levels(df_count$key), gtexColors$description)
+colsGTEx = paste0("#", as.hexmode(gtexColors$color)[i[!is.na(i)]])
+names(colsGTEx) = gtexColors$description[i[!is.na(i)]]
+
+df_melt = reshape2::melt(df_count, id.vars=c("Dataset", "key"))
+
+ggplot( df_melt, aes(key, value, fill=key)) + geom_bar(stat='identity') + theme_bw(10) + theme(aspect.ratio=5, plot.title = element_text(hjust = 0.5), legend.position="none")  + scale_fill_manual(values=c(colsGTEx, colorCodes)[levels(df3$key)]) + coord_flip() + ylab("# genes expressed") + scale_y_continuous(expand=c(0,0)) + xlab('') + facet_wrap(~variable)
+
+
 ```
 
 ```{r plot.coef.variation, fig.width=12, fig.height=12}
@@ -588,7 +772,7 @@ df_cv_GTEx = do.call(rbind, df_cv_GTEx)
 # gtexColors and colorCodes
 
 df = rbind(df_cv_GTEx, df_cv_FANS)
-df$key = factor(df$key)
+df$key = factor(df$key, c(rev(sort(unique(df_cv_FANS$key))), rev(sort(unique(df_cv_GTEx$key)))))
 
 i = match(levels(df$key), gtexColors$description)
 cols = as.hexmode(gtexColors$color)[i[!is.na(i)]]
@@ -597,7 +781,38 @@ names(cols) = gtexColors$description[i[!is.na(i)]]
 
 cols = c(cols, colorCodes)[levels(df$key)]
 
-ggplot( df, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="bottom") + facet_wrap(~Dataset, ncol=1) + scale_color_manual("Type", values=cols) 
+cols[!names(cols) %in% unique(df_cv_FANS$key)] = "black"
+
+# ggplot( df, aes(log2(BCV), color=key)) + geom_density() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="bottom") + facet_wrap(~Dataset, ncol=1) + scale_color_manual("Type", values=cols) 
+
+ggplot(df[,nrow(.SD), by="key"], aes(key, V1, fill=key)) + geom_bar(stat="identity") + theme_bw(10) + theme(aspect.ratio=5, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_fill_manual("Cell Type", values=cols) + coord_flip() + xlab('') + ylab("# genes exprressed")
+
+ggplot( df[CV.ratio>=1,], aes(CV.ratio, ..density.., color=key)) + geom_density(size=2) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_color_manual("Cell Type", values=cols) + xscale("log2", .format = TRUE) + facet_wrap(~Dataset, ncol=1)
+
+ggplot( df[CV.ratio>=1,], aes(log2(CV.ratio), color=key)) + stat_ecdf() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_color_manual("Cell Type", values=cols) + facet_wrap(~Dataset, ncol=2) + ylab("eCDF") + scale_x_continuous(expand=c(0,0), limits=c(0, 10)) 
+
+
+df2 = df[,data.frame(Dataset=Dataset[1], Count = sum(CV.ratio > 2) / length(CV.ratio)),by="key"]
+
+v = df2[Dataset=="GTEx", median(Count)]
+
+ggplot(df2, aes(key, Count, fill=key))  + geom_bar(stat="identity") + theme_bw(10) + theme(aspect.ratio=5, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_fill_manual("Cell Type", values=cols) + coord_flip() + xlab('') + ylab('# genes passing cutoff') + geom_hline(yintercept=v, linetype="dashed", color="grey70")
+
+
+df2 = df[,data.frame(Dataset=Dataset[1], Count = sum(FDR < .05)/length(FDR)),by="key"]
+v = df2[Dataset=="GTEx", median(Count)]
+
+
+
+ggplot(df[,sum(FDR < .05),by='key'], aes(key, V1, fill=key))  + geom_bar(stat="identity") + theme_bw(8) + theme(aspect.ratio=5, plot.title = element_text(hjust = 0.5), legend.position="none") + scale_fill_manual("Cell Type", values=cols) + coord_flip() + xlab('') + ylab('# genes passing cutoff') + geom_hline(yintercept=v, linetype="dashed", color="grey70")
+
+
+ 
+
+
+
+
+
 ```
 
 
