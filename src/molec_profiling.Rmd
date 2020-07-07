@@ -598,7 +598,7 @@ ggplot(df_combined, aes(log2(mean), log2(trend), color=key, size=dataset)) + geo
 ```
 
 
-```{r coef.variation}
+```{r coef.variation, eval=FALSE}
 
 CTarray = as.list(levels(info$CellType))
 CTarray[[5]] = c("GABA", "GLU")
@@ -611,7 +611,7 @@ res_cv_FANS = lapply(CTarray, function(CT){
 
   isexpr = rowSums(edgeR::cpm(geneCounts[,id])>1) >= 0.1*ncol(geneCounts[,id])
 
-  se <- SummarizedExperiment( assays=list(counts = geneCounts[isexpr,id]), colData = info[id,])
+  se <- SummarizedExperiment( assays=list(counts = as.matrix(geneCounts[isexpr,id])), colData = info[id,])
   res = modelGeneCV2( se ) # returns CV^2
   fit = metadata(res)
 
