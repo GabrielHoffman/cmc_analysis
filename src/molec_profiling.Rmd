@@ -308,7 +308,7 @@ fitBasic = dream( vobj, form, info, L=L, BPPARAM=SnowParam(6, progressbar=TRUE))
 ```
 
 ```{r plotContrasts}
-plotContrasts(L)
+plotContrasts(L) + theme(axis.text.x=element_text(angle=45, hjust=1))
 ```
 
 ```{r DE.analysis}
@@ -511,11 +511,11 @@ tabList = lapply(colnames(L), function(coef){
   # tab[which((tab$adj.P.Val < 0.05) & (abs(tab$logFC) > 5)),]
   tab
 })
-names(tabList) = colnames(coef(fitBasic))
+names(tabList) = colnames(L)
 
 saveRDS(tabList, file='./Roussos_MSSM_MolProf_FANS_4_diffExpression.RDS')
 
-# synapse add --parentid syn22243354 Roussos_MSSM_MolProf_FANS_4_diffExpression.RDS
+system("ml python; synapse add --parentid syn22243354 Roussos_MSSM_MolProf_FANS_4_diffExpression.RDS")
 
 lapply(tabList, nrow)
 
