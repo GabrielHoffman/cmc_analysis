@@ -504,7 +504,7 @@ ggplot(df_voomTrend, aes(x, y, color=key)) + geom_line() + theme_bw(15) + theme(
 ```
 
 ## Identify marker genes
-```{r markerGenes}
+```{r tabList.markerGenes}
 
 tabList = lapply(colnames(L), function(coef){
   tab = topTable(fitBasic, coef=coef, number=Inf)
@@ -516,7 +516,6 @@ names(tabList) = colnames(L)
 saveRDS(tabList, file='./Roussos_MSSM_MolProf_FANS_4_diffExpression.RDS')
 
 system("ml python; synapse add --parentid syn22243354 Roussos_MSSM_MolProf_FANS_4_diffExpression.RDS")
-
 ```
 
 
