@@ -300,7 +300,7 @@ L = lapply( 1:ncol(index), function(j){
 })
 L = do.call(cbind, L)
 
-L = cbind(L, data.frame(GABABLU.Other = c(1, 1, 0, 0),
+L = cbind(L, data.frame(GABAGLU.Other = c(1, 1, 0, 0),
                     MgAs.Other = c(0, 0, 0, 1),
                     Olig.Other = c(0, 0, 1, 0) ))
 
@@ -506,8 +506,18 @@ ggplot(df_voomTrend, aes(x, y, color=key)) + geom_line() + theme_bw(15) + theme(
 ## Identify marker genes
 ```{r markerGenes}
 
+tabList = lapply(colnames(L), function(coef){
+  tab = topTable(fitBasic, coef=coef, number=Inf)
+  # tab[which((tab$adj.P.Val < 0.05) & (abs(tab$logFC) > 5)),]
+  tab
+})
+names(tabList) = colnames(coef(fitBasic))
 
+saveRDS(tabList, file='./Roussos_MSSM_MolProf_FANS_4_diffExpression.RDS')
 
+# synapse add --parentid syn22243354 Roussos_MSSM_MolProf_FANS_4_diffExpression.RDS
+
+lapply(tabList, nrow)
 
 
 
