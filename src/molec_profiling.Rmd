@@ -300,6 +300,11 @@ L = lapply( 1:ncol(index), function(j){
 })
 L = do.call(cbind, L)
 
+L = cbind(L, data.frame(GABABLU.Other = c(1, 1, 0, 0),
+                    MgAs.Other = c(0, 0, 0, 1),
+                    Olig.Other = c(0, 0, 1, 0) ))
+plotContrasts(L)
+
 fitBasic = dream( vobj, form, info, L=L, BPPARAM=SnowParam(6, progressbar=TRUE))
 ```
 
@@ -494,6 +499,18 @@ df_voomTrend = lapply( 1:ncol(index), function(j){
 df_voomTrend = do.call(rbind, df_voomTrend)
 
 ggplot(df_voomTrend, aes(x, y, color=key)) + geom_line() + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5)) + ylab("sqrt( standard deviation)") + xlab("log2( count size + 0.5 )") + xlim(0, 22) + ylim(0.4, 1.4)
+```
+
+## Identify marker genes
+```{r markerGenes}
+
+
+
+
+
+
+
+
 ```
 
 ### Compate to GTEx
@@ -1092,6 +1109,26 @@ close(gz1)
 # synapse add --parentid syn22231629 /hpc/users/hoffmg01/work/cmc_analysis/src/Roussos_MSSM_MolProf_FANS_4_log2CPM_reference_panel.csv.gz
 ```
 
+
+```{r save.FANS4}
+
+# full counts
+file = '/hpc/users/hoffmg01/work/cmc_analysis/src/Roussos_MSSM_MolProf_FANS_4_geneCounts.csv.gz'
+gz1 <- gzfile(file, "w")
+write.table(data.table(EnsID = rownames(geneCounts), geneCounts), gz1, quote=FALSE, sep=",", row.names=FALSE)
+close(gz1)
+
+
+# full counts
+file = '/hpc/users/hoffmg01/work/cmc_analysis/src/Roussos_MSSM_MolProf_FANS_4_info.csv.gz'
+gz1 <- gzfile(file, "w")
+write.table(info, gz1, quote=FALSE, sep=",", row.names=FALSE)
+close(gz1)
+
+
+# synapse add --parentid syn22243354 /hpc/users/hoffmg01/work/cmc_analysis/src/Roussos_MSSM_MolProf_FANS_4_geneCounts.csv.gz
+
+```
 
 ```{r exit, cache=FALSE}
 knitr::knit_exit()
