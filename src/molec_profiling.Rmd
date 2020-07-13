@@ -522,12 +522,14 @@ system("ml python; synapse add --parentid syn22243354 Roussos_MSSM_MolProf_FANS_
 ## Plots of top differentially expressed genes
 ```{r markerGenes, fig.width=15, fig.height=30}
 
+lapply( names(tabList), function(key){tab = tabList[[key]]; nrow(tab[tab$logFC > 6,]) })
+
 figList = lapply( names(tabList), function(key){
 
   tab = tabList[[key]]
 
   # only select up regulated genes
-  tab = tab[tab$logFC > 0,]
+  tab = tab[tab$logFC > 6,]
 
   ensIDs = rownames(tab[1:5,])
 
@@ -556,7 +558,7 @@ plot_grid(plotlist = figList, ncol=1)
 
 
 
-### Compate to GTEx
+### Compare to GTEx
 ```{r GTEX.voom}
 
 file_SampleAttributesDS = "/sc/arion/projects/CommonMind/data/resources/GTEx/GTEx_Analysis_v8_Annotations_SampleAttributesDS.txt"
