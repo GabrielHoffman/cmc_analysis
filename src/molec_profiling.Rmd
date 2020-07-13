@@ -303,11 +303,13 @@ L = do.call(cbind, L)
 L = cbind(L, data.frame(GABABLU.Other = c(1, 1, 0, 0),
                     MgAs.Other = c(0, 0, 0, 1),
                     Olig.Other = c(0, 0, 1, 0) ))
-plotContrasts(L)
 
 fitBasic = dream( vobj, form, info, L=L, BPPARAM=SnowParam(6, progressbar=TRUE))
 ```
 
+```{r plotContrasts}
+plotContrasts(L)
+```
 
 ```{r DE.analysis}
 
