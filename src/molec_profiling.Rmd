@@ -624,7 +624,7 @@ gtexColors = read.csv('/sc/arion/projects/CommonMind/data/resources/GTEx/GTEx_Ti
 ```
 
 
-```{r CV.all.in.one, eval=FALSE}
+```{r CV.all.in.one, eval=TRUE}
 
 # FANS4
 isexpr = rowSums(edgeR::cpm(geneCounts)>1) >= 0.3*ncol(geneCounts)
@@ -676,7 +676,7 @@ ggplot(df_combined, aes(log2(mean), log2(trend), color=key, size=dataset)) + geo
 ```
 
 
-```{r coef.variation, eval=FALSE}
+```{r coef.variation, eval=TRUE}
 
 CTarray = as.list(levels(info$CellType))
 CTarray[[5]] = c("GABA", "GLU")
