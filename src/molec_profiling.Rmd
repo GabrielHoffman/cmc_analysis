@@ -629,7 +629,7 @@ library(scran)
 # FANS4
 isexpr = rowSums(edgeR::cpm(geneCounts)>1) >= 0.3*ncol(geneCounts)
 
-se <- SummarizedExperiment( assays=list(counts = geneCounts[isexpr,]), colData = info)
+se <- SummarizedExperiment( assays=list(counts = as.matrix(geneCounts[isexpr,])), colData = info)
 res = modelGeneCV2( se, block=info$CellType )
 fit = metadata(res)
 
