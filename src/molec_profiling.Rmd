@@ -44,7 +44,7 @@ library(org.Hs.eg.db)
 library(kableExtra)
 library(ggplot2)
 library(cowplot)
-# library(scran)
+library(scran)
 library(SummarizedExperiment)
 library(gridExtra)
 library(openxlsx)
@@ -127,7 +127,7 @@ info$DissectionID = sapply(strsplit( info$Name, '\\.'), function(x) x[1])
 info$CellType = sapply(strsplit( info$Name, '\\.'), function(x) x[2])
 info$Assay = sapply(strsplit( info$Name, '\\.'), function(x) x[3])
 
-# set color codes cor each cell type
+# set color codes for each cell type
 colorCodes = c(
   GABA = '#66A61E',
   GLU = '#E6AB02',
@@ -625,7 +625,7 @@ gtexColors = read.csv('/sc/arion/projects/CommonMind/data/resources/GTEx/GTEx_Ti
 
 
 ```{r CV.all.in.one, eval=TRUE}
-
+library(scran)
 # FANS4
 isexpr = rowSums(edgeR::cpm(geneCounts)>1) >= 0.3*ncol(geneCounts)
 
@@ -679,8 +679,8 @@ ggplot(df_combined, aes(log2(mean), log2(trend), color=key, size=dataset)) + geo
 ```{r coef.variation, eval=TRUE}
 
 CTarray = as.list(levels(info$CellType))
-CTarray[[5]] = c("GABA", "GLU")
-CTarray[[6]] = levels(info$CellType)
+# CTarray[[5]] = c("GABA", "GLU")
+# CTarray[[6]] = levels(info$CellType)
 
 # different because only genes expressed in given cell type are used
 res_cv_FANS = lapply(CTarray, function(CT){
@@ -808,9 +808,10 @@ cols[names(colsGTEx)] = "grey"
 ggplot(df2, aes(log2(sqrt(CV2)), color=key, size=Dataset, linetype=Type)) + geom_density(size=2) + theme_bw(15) + theme(aspect.ratio=1, plot.title = element_text(hjust = 0.5), legend.position="none") + xlab(bquote(log[2]~CV~trend)) + scale_color_manual(values=cols) + scale_size_manual(values=c(2, .1)) + scale_linetype_discrete(c("solid", "dashed"))
 
 
-df3 = df2[,median(sqrt(CV)), by='key']
+df3 = df2[,median(sqrt(CV2)), by='key']
+df3$key = factor(df3$key, rev(levels(df3$key)))
 
-ggplot( df3, aes(key, V1, fill=key)) + geom_bar(stat='identity') + theme_bw(10) + theme(aspect.ratio=5, plot.title = element_text(hjust = 0.5), legend.position="none")  + scale_fill_manual(values=c(colsGTEx, colorCodes)[levels(df3$key)]) + coord_flip() + ylab(bquote(Median~CV)) + scale_y_continuous(expand=c(0,0)) + xlab('') + ylim(0, max(df3$V1)*1.05)
+ggplot( df3[!is.na(df3$V1)], aes(key, V1, fill=key)) + geom_bar(stat='identity') + theme_bw(10) + theme(aspect.ratio=5, plot.title = element_text(hjust = 0.5), legend.position="none")  + scale_fill_manual(values=c(colsGTEx, colorCodes)[levels(df3$key)]) + coord_flip() + ylab(bquote(Median~CV)) + scale_y_continuous(expand=c(0,0)) + xlab('') + ylim(0, max(df3$V1, na.rm=TRUE)*1.05)
 
 
 # Compare to IPS and LCL
